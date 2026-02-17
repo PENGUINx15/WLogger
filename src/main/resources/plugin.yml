@@ -1,0 +1,4 @@
+name: WLogger
+version: '1.0.0'
+main: me.penguinx13.wLogger.WLogger
+api-version: '1.19'

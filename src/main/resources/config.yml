@@ -1,0 +1,17 @@
+location:
+  min:
+    world: world
+    x: 1181
+    y: 106
+    z: 1018
+  max:
+    world: world
+    x: 1189
+    y: 112
+    z: 1026
+tree:
+  reward: 3
+  cooldown: 15
+defaultValues:
+  backpack: 50
+  costmultiplier: 1.0
