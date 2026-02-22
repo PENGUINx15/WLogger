@@ -56,12 +56,22 @@ public class BlockBreakListener implements Listener {
         breakProgress.remove(key);
         event.setCancelled(true);
 
+        Map<Block, TreeRegenerationTask.BlockSnapshot> treeState = new HashMap<>();
         for (Block log : tree.getLogs()) {
+            treeState.put(log, TreeRegenerationTask.snapshot(log));
             log.setType(Material.AIR);
         }
-        MessageManager.sendMessage(player, "{action}&6" + requiredBreaks);
+
         Collection<Block> leaves = tree.getLeaves();
+        for (Block leaf : leaves) {
+            treeState.putIfAbsent(leaf, TreeRegenerationTask.snapshot(leaf));
+        }
+
+        MessageManager.sendMessage(player, "{action}&6" + requiredBreaks);
         new LeafDecayTask(leaves).runTaskTimer(plugin, 1L, 1L);
+
+        long cooldownSeconds =  Math.max(1,  config.getConfig("config.yml").getLong("tree.cooldown", 15L));
+        new TreeRegenerationTask(treeState).runTaskLater(plugin, cooldownSeconds * 20L);
     }
 
     private record BreakProgressKey(UUID playerId, String world, int x, int y, int z) {

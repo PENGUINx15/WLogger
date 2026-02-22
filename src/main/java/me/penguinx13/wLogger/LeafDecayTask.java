@@ -13,7 +13,7 @@ public class LeafDecayTask extends BukkitRunnable {
     private final Queue<Block> leaves;
 
     public LeafDecayTask(Collection<Block> leaves) {
-        this.leaves = new ArrayDeque<>(leaves);;
+        this.leaves = new ArrayDeque<>(leaves);
     }
 
     @Override
