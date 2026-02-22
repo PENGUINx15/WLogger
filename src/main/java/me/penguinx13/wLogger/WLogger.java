@@ -30,6 +30,7 @@ public final class WLogger extends JavaPlugin {
         getServer().getPluginManager().registerEvents(blockBreakListener, this);
 
         Objects.requireNonNull(getCommand("wlogger")).setExecutor(new CommandsExecutor(this, configManager));
+        Objects.requireNonNull(getCommand("wlogger")).setTabCompleter(new WLoggerTabCompleter());
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new Placeholders(this).register();

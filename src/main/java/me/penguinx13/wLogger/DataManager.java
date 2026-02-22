@@ -129,4 +129,14 @@ public class DataManager {
 
         return 1.0D;
     }
+
+    public void setCostMultiplier(String playerName, double value) {
+        ensurePlayerExists(playerName);
+
+        sqliteManager.executeUpdate(
+                "UPDATE players SET costmultiplier = ? WHERE playerName = ?",
+                value,
+                playerName
+        );
+    }
 }
