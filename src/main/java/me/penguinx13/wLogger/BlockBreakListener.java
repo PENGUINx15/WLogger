@@ -30,7 +30,7 @@ public class BlockBreakListener implements Listener {
         Block block = event.getBlock();
         Player player = event.getPlayer();
 
-        if (!isConfiguredLocation(block)) {
+        if (!isLocation(block)) {
             return;
         }
 
@@ -88,7 +88,7 @@ public class BlockBreakListener implements Listener {
         new TreeRegenerationTask(treeState).runTaskLater(plugin, cooldownSeconds * 20L);
     }
 
-    private boolean isConfiguredLocation(Block block) {
+    private boolean isLocation(Block block) {
         FileConfiguration cfg = config.getConfig("config.yml");
 
         String minWorld = cfg.getString("location.min.world");

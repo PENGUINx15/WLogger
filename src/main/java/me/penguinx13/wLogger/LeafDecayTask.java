@@ -1,5 +1,6 @@
 package me.penguinx13.wLogger;
 
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.type.Leaves;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -30,7 +31,7 @@ public class LeafDecayTask extends BukkitRunnable {
         }
 
         if (leaf.getBlockData() instanceof Leaves) {
-            leaf.breakNaturally();
+            leaf.setType(Material.AIR);
         }
     }
 }

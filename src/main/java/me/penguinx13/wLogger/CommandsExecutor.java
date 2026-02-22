@@ -3,12 +3,10 @@ package me.penguinx13.wLogger;
 import me.penguinx13.wapi.Managers.ConfigManager;
 import me.penguinx13.wapi.Managers.MessageManager;
 import net.milkbowl.vault.economy.Economy;
-import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class CommandsExecutor implements CommandExecutor {
@@ -39,11 +37,7 @@ public class CommandsExecutor implements CommandExecutor {
                 return true;
             }
 
-            Economy economy = getEconomy();
-            if (economy == null) {
-                MessageManager.sendMessage(player, "{message}&7[&6&lЛесорубка&7]&f Экономика недоступна.");
-                return true;
-            }
+            Economy economy = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();;
 
             double rewardPerBlock = configManager.getConfig("config.yml").getDouble("tree.reward", 3.0D);
             double costMultiplier = plugin.getDataManager().getCostMultiplier(player.getName());
@@ -62,10 +56,5 @@ public class CommandsExecutor implements CommandExecutor {
 
         MessageManager.sendMessage(player, "{message}&7[&6&lЛесорубка&7]&f Неизвестная подкоманда.");
         return true;
-    }
-
-    private Economy getEconomy() {
-        RegisteredServiceProvider<Economy> registration = Bukkit.getServicesManager().getRegistration(Economy.class);
-        return registration != null ? registration.getProvider() : null;
     }
 }
