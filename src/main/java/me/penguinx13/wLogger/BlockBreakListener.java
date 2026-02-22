@@ -2,7 +2,7 @@ package me.penguinx13.wLogger;
 
 import me.penguinx13.wapi.Managers.ConfigManager;
 import me.penguinx13.wapi.Managers.MessageManager;
-import org.bukkit.Location;
+import me.penguinx13.wapi.Tree;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
@@ -10,8 +10,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.*;
 
