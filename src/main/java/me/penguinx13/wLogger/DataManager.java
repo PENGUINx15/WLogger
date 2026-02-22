@@ -21,7 +21,7 @@ public class DataManager {
         this.jdbcUrl = "jdbc:sqlite:" + databaseFile.getAbsolutePath();
     }
 
-    public void createPlayersTableIfNotExists() {
+    public void createTable() {
         sqliteManager.executeUpdate(
                 "CREATE TABLE IF NOT EXISTS players (" +
                         "playerName TEXT PRIMARY KEY," +
@@ -53,17 +53,14 @@ public class DataManager {
         );
     }
 
-    public void addBrokenBlocks(String playerName, int amount) {
+    public void setBrokenBlocks(String playerName, int blocksCount) {
+        ensurePlayerExists(playerName);
+
         sqliteManager.executeUpdate(
-                "UPDATE players SET brokenBlocks = brokenBlocks + ? WHERE playerName = ?",
-                amount,
+                "UPDATE players SET brokenBlocks = ? WHERE playerName = ?",
+                blocksCount,
                 playerName
         );
-    }
-
-    public void incrementBrokenBlocksForTree(String playerName, int logsCount) {
-        ensurePlayerExists(playerName);
-        addBrokenBlocks(playerName, logsCount);
     }
 
     public int getBrokenBlocks(String playerName) {
@@ -80,6 +77,35 @@ public class DataManager {
             }
         } catch (SQLException exception) {
             throw new RuntimeException("Не удалось получить brokenBlocks для игрока " + playerName, exception);
+        }
+
+        return 0;
+    }
+
+    public void setBackPack(String playerName, int blocksCount) {
+        ensurePlayerExists(playerName);
+
+        sqliteManager.executeUpdate(
+                "UPDATE players SET backpack = ? WHERE playerName = ?",
+                blocksCount,
+                playerName
+        );
+    }
+
+    public int getBackpack(String playerName) {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT backpack FROM players WHERE playerName = ?"
+             )) {
+            statement.setString(1, playerName);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt("backpack");
+                }
+            }
+        } catch (SQLException exception) {
+            throw new RuntimeException("Не удалось получить backpack для игрока " + playerName, exception);
         }
 
         return 0;

@@ -20,7 +20,7 @@ public final class WLogger extends JavaPlugin {
         configManager.registerConfig("config.yml");
 
         dataManager = new DataManager(this);
-        dataManager.createPlayersTableIfNotExists();
+        dataManager.createTable();
 
         int defaultBackpack = configManager.getConfig("config.yml").getInt("defaultValues.backpack", 50);
         double defaultCostMultiplier = configManager.getConfig("config.yml").getDouble("defaultValues.costmultiplier", 1.0D);

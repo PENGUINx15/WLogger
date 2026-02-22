@@ -2,6 +2,7 @@ package me.penguinx13.wLogger;
 
 import me.penguinx13.wapi.Managers.ConfigManager;
 import me.penguinx13.wapi.Managers.MessageManager;
+import me.penguinx13.wapi.Managers.SQLiteManager;
 import me.penguinx13.wapi.Tree;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -59,6 +60,7 @@ public class BlockBreakListener implements Listener {
         Map<Block, TreeRegenerationTask.BlockSnapshot> treeState = new HashMap<>();
         for (Block log : tree.getLogs()) {
             treeState.put(log, TreeRegenerationTask.snapshot(log));
+
             log.setType(Material.AIR);
         }
 
@@ -69,8 +71,12 @@ public class BlockBreakListener implements Listener {
 
         MessageManager.sendMessage(player, "{action}&6" + requiredBreaks);
 
-        plugin.getDataManager().incrementBrokenBlocksForTree(player.getName(), requiredBreaks);
-
+        if(plugin.getDataManager().getBackpack(player.getName()) <= (plugin.getDataManager().getBrokenBlocks(player.getName())+requiredBreaks)) {
+            MessageManager.sendMessage(player, "{message}&7[&6&lЛесорубка&7]&f Рюкзак переполнен, сдайте ресурсы &6/wlogger claim");
+            plugin.getDataManager().setBrokenBlocks(player.getName(), plugin.getDataManager().getBackpack(player.getName()));
+        }else{
+            plugin.getDataManager().setBrokenBlocks(player.getName(), plugin.getDataManager().getBrokenBlocks(player.getName()) + requiredBreaks);
+        }
         new LeafDecayTask(leaves).runTaskTimer(plugin, 1L, 1L);
 
         long cooldownSeconds =  Math.max(1,  config.getConfig("config.yml").getLong("tree.cooldown", 15L));
