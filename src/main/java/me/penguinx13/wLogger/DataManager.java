@@ -110,4 +110,23 @@ public class DataManager {
 
         return 0;
     }
+
+    public double getCostMultiplier(String playerName) {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT costmultiplier FROM players WHERE playerName = ?"
+             )) {
+            statement.setString(1, playerName);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getDouble("costmultiplier");
+                }
+            }
+        } catch (SQLException exception) {
+            throw new RuntimeException("Не удалось получить costmultiplier для игрока " + playerName, exception);
+        }
+
+        return 1.0D;
+    }
 }
