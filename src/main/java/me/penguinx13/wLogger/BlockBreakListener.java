@@ -7,6 +7,7 @@ import me.penguinx13.wapi.Tree;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -28,6 +29,10 @@ public class BlockBreakListener implements Listener {
     public void onBlockBreak(BlockBreakEvent event) {
         Block block = event.getBlock();
         Player player = event.getPlayer();
+
+        if (!isConfiguredLocation(block)) {
+            return;
+        }
 
         if (!Tag.LOGS.isTagged(block.getType())) {
             return;
@@ -81,6 +86,31 @@ public class BlockBreakListener implements Listener {
 
         long cooldownSeconds =  Math.max(1,  config.getConfig("config.yml").getLong("tree.cooldown", 15L));
         new TreeRegenerationTask(treeState).runTaskLater(plugin, cooldownSeconds * 20L);
+    }
+
+    private boolean isConfiguredLocation(Block block) {
+        FileConfiguration cfg = config.getConfig("config.yml");
+
+        String minWorld = cfg.getString("location.min.world");
+        String maxWorld = cfg.getString("location.max.world");
+        if (minWorld == null || maxWorld == null) {
+            return false;
+        }
+
+        if (!block.getWorld().getName().equals(minWorld) || !block.getWorld().getName().equals(maxWorld)) {
+            return false;
+        }
+
+        int minX = Math.min(cfg.getInt("location.min.x"), cfg.getInt("location.max.x"));
+        int maxX = Math.max(cfg.getInt("location.min.x"), cfg.getInt("location.max.x"));
+        int minY = Math.min(cfg.getInt("location.min.y"), cfg.getInt("location.max.y"));
+        int maxY = Math.max(cfg.getInt("location.min.y"), cfg.getInt("location.max.y"));
+        int minZ = Math.min(cfg.getInt("location.min.z"), cfg.getInt("location.max.z"));
+        int maxZ = Math.max(cfg.getInt("location.min.z"), cfg.getInt("location.max.z"));
+
+        return block.getX() >= minX && block.getX() <= maxX
+                && block.getY() >= minY && block.getY() <= maxY
+                && block.getZ() >= minZ && block.getZ() <= maxZ;
     }
 
     private record BreakProgressKey(UUID playerId, String world, int x, int y, int z) {
