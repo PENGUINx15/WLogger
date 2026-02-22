@@ -38,7 +38,6 @@ public class CommandsExecutor implements CommandExecutor {
             }
 
             Economy economy = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
-
             double rewardPerBlock = configManager.getConfig("config.yml").getDouble("tree.reward", 3.0D);
             double costMultiplier = plugin.getDataManager().getCostMultiplier(player.getName());
             double totalReward = brokenBlocks * rewardPerBlock * costMultiplier;
@@ -65,19 +64,19 @@ public class CommandsExecutor implements CommandExecutor {
             return true;
         }
 
-        if (args[0].equalsIgnoreCase("backpack") || args[0].equalsIgnoreCase("costmultiplier") || args[0].equalsIgnoreCase("cosmultipler")) {
+        if (isOperation(args[0])) {
             if (!sender.hasPermission("wlogger.admin")) {
                 sender.sendMessage("§cУ вас нет прав.");
                 return true;
             }
 
             if (args.length < 3) {
-                sender.sendMessage("§eИспользование: /wlogger " + args[0].toLowerCase() + " <set|add|rem> <значение>");
+                sender.sendMessage("§eИспользование: /wlogger <set|add|rem> <backpack|costmultiplier> <значение>");
                 return true;
             }
 
-            String target = args[0].toLowerCase();
-            String operation = args[1].toLowerCase();
+            String operation = args[0].toLowerCase();
+            String target = args[1].toLowerCase();
 
             if (target.equals("backpack")) {
                 Integer value = parseInt(args[2]);
@@ -88,11 +87,6 @@ public class CommandsExecutor implements CommandExecutor {
 
                 int current = plugin.getDataManager().getBackpack("server-default");
                 int updated = applyOperation(current, value, operation);
-                if (updated == Integer.MIN_VALUE) {
-                    sender.sendMessage("§cОперация должна быть set, add или rem.");
-                    return true;
-                }
-
                 if (updated < 1) {
                     sender.sendMessage("§cЗначение backpack не может быть меньше 1.");
                     return true;
@@ -103,26 +97,26 @@ public class CommandsExecutor implements CommandExecutor {
                 return true;
             }
 
-            Double value = parseDouble(args[2]);
-            if (value == null) {
-                sender.sendMessage("§cЗначение должно быть числом.");
+            if (target.equals("costmultiplier") || target.equals("cosmultipler")) {
+                Double value = parseDouble(args[2]);
+                if (value == null) {
+                    sender.sendMessage("§cЗначение должно быть числом.");
+                    return true;
+                }
+
+                double current = plugin.getDataManager().getCostMultiplier("server-default");
+                double updated = applyOperation(current, value, operation);
+                if (updated <= 0.0D) {
+                    sender.sendMessage("§cЗначение costmultiplier должно быть больше 0.");
+                    return true;
+                }
+
+                plugin.getDataManager().setCostMultiplier("server-default", updated);
+                sender.sendMessage("§aУстановлено server-default costmultiplier: " + String.format("%.2f", updated));
                 return true;
             }
 
-            double current = plugin.getDataManager().getCostMultiplier("server-default");
-            double updated = applyOperation(current, value, operation);
-            if (Double.isNaN(updated)) {
-                sender.sendMessage("§cОперация должна быть set, add или rem.");
-                return true;
-            }
-
-            if (updated <= 0.0D) {
-                sender.sendMessage("§cЗначение costmultiplier должно быть больше 0.");
-                return true;
-            }
-
-            plugin.getDataManager().setCostMultiplier("server-default", updated);
-            sender.sendMessage("§aУстановлено server-default costmultiplier: " + String.format("%.2f", updated));
+            sender.sendMessage("§cПараметр должен быть backpack или costmultiplier.");
             return true;
         }
 
@@ -130,12 +124,16 @@ public class CommandsExecutor implements CommandExecutor {
         return true;
     }
 
+    private boolean isOperation(String value) {
+        return value.equalsIgnoreCase("set") || value.equalsIgnoreCase("add") || value.equalsIgnoreCase("rem");
+    }
+
     private int applyOperation(int current, int value, String operation) {
         return switch (operation) {
             case "set" -> value;
             case "add" -> current + value;
             case "rem" -> current - value;
-            default -> Integer.MIN_VALUE;
+            default -> current;
         };
     }
 
@@ -144,7 +142,7 @@ public class CommandsExecutor implements CommandExecutor {
             case "set" -> value;
             case "add" -> current + value;
             case "rem" -> current - value;
-            default -> Double.NaN;
+            default -> current;
         };
     }
 
@@ -167,7 +165,6 @@ public class CommandsExecutor implements CommandExecutor {
     private void sendUsage(CommandSender sender) {
         sender.sendMessage("§e/wlogger claim");
         sender.sendMessage("§e/wlogger reload");
-        sender.sendMessage("§e/wlogger backpack <set|add|rem> <значение>");
-        sender.sendMessage("§e/wlogger costmultiplier <set|add|rem> <значение>");
+        sender.sendMessage("§e/wlogger <set|add|rem> <backpack|costmultiplier> <значение>");
     }
 }

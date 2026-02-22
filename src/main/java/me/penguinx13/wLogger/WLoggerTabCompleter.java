@@ -18,21 +18,25 @@ public class WLoggerTabCompleter implements TabCompleter {
             addIfMatches(suggestions, args[0], "claim");
             if (sender.hasPermission("wlogger.admin")) {
                 addIfMatches(suggestions, args[0], "reload");
-                addIfMatches(suggestions, args[0], "backpack");
-                addIfMatches(suggestions, args[0], "costmultiplier");
-                addIfMatches(suggestions, args[0], "cosmultipler");
+                addIfMatches(suggestions, args[0], "set");
+                addIfMatches(suggestions, args[0], "add");
+                addIfMatches(suggestions, args[0], "rem");
             }
             return suggestions;
         }
 
-        if (args.length == 2 && (args[0].equalsIgnoreCase("backpack") || args[0].equalsIgnoreCase("costmultiplier") || args[0].equalsIgnoreCase("cosmultipler"))) {
-            addIfMatches(suggestions, args[1], "set");
-            addIfMatches(suggestions, args[1], "add");
-            addIfMatches(suggestions, args[1], "rem");
+        if (args.length == 2 && isOperation(args[0])) {
+            addIfMatches(suggestions, args[1], "backpack");
+            addIfMatches(suggestions, args[1], "costmultiplier");
+            addIfMatches(suggestions, args[1], "cosmultipler");
             return suggestions;
         }
 
         return suggestions;
+    }
+
+    private boolean isOperation(String value) {
+        return value.equalsIgnoreCase("set") || value.equalsIgnoreCase("add") || value.equalsIgnoreCase("rem");
     }
 
     private void addIfMatches(List<String> list, String input, String value) {
