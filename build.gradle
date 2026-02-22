@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-    id("xyz.jpenilla.run-paper") version "2.3.1"
 }
 
 group = 'me.penguinx13'
@@ -9,8 +8,8 @@ version = '1.0.0'
 repositories {
     mavenCentral()
     maven {
-        name = "papermc-repo"
-        url = "https://repo.papermc.io/repository/maven-public/"
+        name = 'papermc-repo'
+        url = 'https://repo.papermc.io/repository/maven-public/'
     }
     maven {
         url = 'https://repo.extendedclip.com/content/repositories/placeholderapi/'
@@ -19,19 +18,10 @@ repositories {
 }
 
 dependencies {
-    compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
+    compileOnly 'io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT'
     compileOnly 'me.clip:placeholderapi:2.11.6'
-    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
-    compileOnly "com.github.PENGUINx15:WAPI:main-SNAPSHOT"
-}
-
-tasks {
-    runServer {
-        // Configure the Minecraft version for our task.
-        // This is the only required configuration besides applying the plugin.
-        // Your plugin's jar (or shadowJar if present) will be used automatically.
-        minecraftVersion("1.19")
-    }
+    compileOnly 'com.github.MilkBowl:VaultAPI:1.7'
+    compileOnly 'com.github.PENGUINx15:WAPI:main-SNAPSHOT'
 }
 
 def targetJavaVersion = 17

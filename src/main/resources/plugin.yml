@@ -2,3 +2,14 @@ name: WLogger
 version: '1.0.0'
 main: me.penguinx13.wLogger.WLogger
 api-version: '1.19'
+
+commands:
+  wlogger:
+    description: Main command for WLogger plugin.
+    usage: /wlogger
+    permission: wlogger.use
+
+permissions:
+  wlogger.use:
+    description: Allows using /wlogger command.
+    default: true
