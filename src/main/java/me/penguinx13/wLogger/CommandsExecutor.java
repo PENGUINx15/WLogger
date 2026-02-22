@@ -6,10 +6,16 @@ import net.milkbowl.vault.economy.Economy;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class CommandsExecutor implements CommandExecutor {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+public class CommandsExecutor implements CommandExecutor, TabCompleter {
     private final WLogger plugin;
     private final ConfigManager configManager;
 
@@ -37,7 +43,7 @@ public class CommandsExecutor implements CommandExecutor {
                 return true;
             }
 
-            Economy economy = plugin.getServer().getServicesManager().getRegistration(Economy.class).getProvider();
+            Economy economy = Objects.requireNonNull(plugin.getServer().getServicesManager().getRegistration(Economy.class)).getProvider();
             double rewardPerBlock = configManager.getConfig("config.yml").getDouble("tree.reward", 3.0D);
             double costMultiplier = plugin.getDataManager().getCostMultiplier(player.getName());
             double totalReward = brokenBlocks * rewardPerBlock * costMultiplier;
@@ -124,8 +130,39 @@ public class CommandsExecutor implements CommandExecutor {
         return true;
     }
 
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
+        List<String> suggestions = new ArrayList<>();
+
+        if (args.length == 1) {
+            addIfMatches(suggestions, args[0], "claim");
+            if (sender.hasPermission("wlogger.admin")) {
+                addIfMatches(suggestions, args[0], "reload");
+                addIfMatches(suggestions, args[0], "set");
+                addIfMatches(suggestions, args[0], "add");
+                addIfMatches(suggestions, args[0], "rem");
+            }
+            return suggestions;
+        }
+
+        if (args.length == 2 && isOperation(args[0])) {
+            addIfMatches(suggestions, args[1], "backpack");
+            addIfMatches(suggestions, args[1], "costmultiplier");
+            addIfMatches(suggestions, args[1], "cosmultipler");
+            return suggestions;
+        }
+
+        return suggestions;
+    }
+
     private boolean isOperation(String value) {
         return value.equalsIgnoreCase("set") || value.equalsIgnoreCase("add") || value.equalsIgnoreCase("rem");
+    }
+
+    private void addIfMatches(List<String> list, String input, String value) {
+        if (value.toLowerCase().startsWith(input.toLowerCase())) {
+            list.add(value);
+        }
     }
 
     private int applyOperation(int current, int value, String operation) {
