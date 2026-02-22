@@ -68,6 +68,9 @@ public class BlockBreakListener implements Listener {
         }
 
         MessageManager.sendMessage(player, "{action}&6" + requiredBreaks);
+
+        plugin.getDataManager().incrementBrokenBlocksForTree(player.getName(), requiredBreaks);
+
         new LeafDecayTask(leaves).runTaskTimer(plugin, 1L, 1L);
 
         long cooldownSeconds =  Math.max(1,  config.getConfig("config.yml").getLong("tree.cooldown", 15L));
