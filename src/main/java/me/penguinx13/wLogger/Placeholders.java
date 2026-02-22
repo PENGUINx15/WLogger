@@ -38,6 +38,11 @@ public class Placeholders extends PlaceholderExpansion {
         if (params.equalsIgnoreCase("status")) {
             return "enabled";
         }
+
+        if (player != null && params.equalsIgnoreCase("brokenblocks")) {
+            return String.valueOf(plugin.getDataManager().getBrokenBlocks(player.getName()));
+        }
+
         return null;
     }
 }
