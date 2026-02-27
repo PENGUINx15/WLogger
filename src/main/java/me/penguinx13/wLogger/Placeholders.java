@@ -1,7 +1,6 @@
 package me.penguinx13.wLogger;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.penguinx13.wapi.Managers.ConfigManager;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +37,11 @@ public class Placeholders extends PlaceholderExpansion {
 
     @Override
     public @Nullable String onPlaceholderRequest(Player player, @NotNull String params) {
-        if (player != null && params.equalsIgnoreCase("broken")) {
+        if (params.equalsIgnoreCase("status")) {
+            return "enabled";
+        }
+
+        if (player != null && params.equalsIgnoreCase("brokenblocks")) {
             return String.valueOf(plugin.getDataManager().getBrokenBlocks(player.getName()));
         }
         if (player != null && params.equalsIgnoreCase("cm")) {
