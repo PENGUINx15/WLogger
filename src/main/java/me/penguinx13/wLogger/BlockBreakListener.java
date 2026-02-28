@@ -19,6 +19,7 @@ public class BlockBreakListener implements Listener {
     private final ConfigManager config;
     private final WLogger plugin;
     private final Map<BreakProgressKey, Integer> breakProgress = new HashMap<>();
+    private boolean worldMismatchWarningLogged = false;
 
     public BlockBreakListener(ConfigManager config, WLogger plugin) {
         this.config = config;
@@ -97,7 +98,15 @@ public class BlockBreakListener implements Listener {
             return false;
         }
 
-        if (!block.getWorld().getName().equals(minWorld) || !block.getWorld().getName().equals(maxWorld)) {
+        if (!minWorld.equals(maxWorld)) {
+            if (!worldMismatchWarningLogged) {
+                plugin.getLogger().warning("Некорректная конфигурация региона: location.min.world и location.max.world должны совпадать.");
+                worldMismatchWarningLogged = true;
+            }
+            return false;
+        }
+
+        if (!block.getWorld().getName().equals(minWorld)) {
             return false;
         }
 
