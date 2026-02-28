@@ -1,0 +1,35 @@
+command:
+  onlyPlayers: "Only players can use this command."
+  noPermission: "§cУ вас нет прав."
+  unknownSubcommand: "§cНеизвестная подкоманда."
+  invalidParameter: "§cПараметр должен быть backpack или costmultiplier."
+  usage:
+    operation: "§eИспользование: /wlogger <set|add|rem> <backpack|costmultiplier> <значение>"
+    main:
+      - "§e/wlogger claim"
+      - "§e/wlogger reload"
+      - "§e/wlogger <set|add|rem> <backpack|costmultiplier> <значение>"
+  reload:
+    success: "§aКонфиг WLogger перезагружен."
+  valueMustBeInteger: "§cЗначение должно быть целым числом."
+  valueMustBeNumber: "§cЗначение должно быть числом."
+  backpackMin: "§cЗначение backpack не может быть меньше 1."
+  costMultiplierMin: "§cЗначение costmultiplier должно быть больше 0."
+  backpackUpdated: "§aУстановлено server-default backpack: {value}"
+  costMultiplierUpdated: "§aУстановлено server-default costmultiplier: {value}"
+  claim:
+    nothingToClaim: "{message}&7[&6&lЛесорубка&7]&f Нечего сдавать."
+    economyUnavailable: "{message}&7[&6&lЛесорубка&7]&f Экономика недоступна, обратитесь к администрации."
+    success: "{message}&7[&6&lЛесорубка&7]&f Вы сдали &6{blocks}&f блоков и получили &6{reward}"
+break:
+  progress: "{action}&e{current}&f/&6{required}"
+  completed: "{action}&6{required}"
+  backpackFull: "{message}&7[&6&lЛесорубка&7]&f Рюкзак переполнен, сдайте ресурсы &6/wlogger claim"
+log:
+  economyMissing: "Экономика отсутствует, плагин отключается."
+  placeholdersRegistered: "Плейсхолдеры WLogger зарегистрированы успешно!"
+  regionConfigMismatch: "Некорректная конфигурация региона: location.min.world и location.max.world должны совпадать."
+error:
+  getBrokenBlocks: "Не удалось получить brokenBlocks для игрока {player}"
+  getBackpack: "Не удалось получить backpack для игрока {player}"
+  getCostMultiplier: "Не удалось получить costmultiplier для игрока {player}"

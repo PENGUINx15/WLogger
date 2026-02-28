@@ -19,16 +19,17 @@ public final class WLogger extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        configManager = new ConfigManager(this);
+        configManager.registerConfig("config.yml");
+        configManager.registerConfig("messeges.yml");
+
         if (getServicesManager().getRegistration(Economy.class) == null) {
-            getLogger().severe("Экономика отсутствует, плагин отключается.");
+            getLogger().severe(configManager.getConfig("messeges.yml").getString("log.economyMissing", "log.economyMissing"));
             Bukkit.getPluginManager().disablePlugin(this);
             return;
         }
 
-        configManager = new ConfigManager(this);
-        configManager.registerConfig("config.yml");
-
-        dataManager = new DataManager(this);
+        dataManager = new DataManager(this, configManager);
         dataManager.createTable();
 
         int defaultBackpack = configManager.getConfig("config.yml").getInt("defaultValues.backpack", 50);
@@ -44,12 +45,15 @@ public final class WLogger extends JavaPlugin {
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new Placeholders(this, configManager).register();
-            getLogger().info("Плейсхолдеры WLogger зарегистрированы успешно!");
+            getLogger().info(configManager.getConfig("messeges.yml").getString("log.placeholdersRegistered", "log.placeholdersRegistered"));
         }
     }
 
     @Override
     public void onDisable() {
-        dataManager.disconnect();
+        if (dataManager != null) {
+            dataManager.disconnect();
+        }
     }
+
 }
