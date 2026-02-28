@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class CommandsExecutor implements CommandExecutor, TabCompleter {
     private final WLogger plugin;
@@ -32,19 +33,19 @@ public class CommandsExecutor implements CommandExecutor, TabCompleter {
 
         if (args[0].equalsIgnoreCase("claim")) {
             if (!(sender instanceof Player player)) {
-                sender.sendMessage("Only players can use this command.");
+                sender.sendMessage(msg("command.onlyPlayers"));
                 return true;
             }
 
             int brokenBlocks = plugin.getDataManager().getBrokenBlocks(player.getName());
             if (brokenBlocks <= 0) {
-                MessageManager.sendMessage(player, "{message}&7[&6&lЛесорубка&7]&f Нечего сдавать.");
+                MessageManager.sendMessage(player, msg("command.claim.nothingToClaim"));
                 return true;
             }
 
             var economyRegistration = plugin.getServer().getServicesManager().getRegistration(Economy.class);
             if (economyRegistration == null || economyRegistration.getProvider() == null) {
-                MessageManager.sendMessage(player, "{message}&7[&6&lЛесорубка&7]&f Экономика недоступна, обратитесь к администрации.");
+                MessageManager.sendMessage(player, msg("command.claim.economyUnavailable"));
                 return true;
             }
 
@@ -56,33 +57,33 @@ public class CommandsExecutor implements CommandExecutor, TabCompleter {
             economy.depositPlayer(player, totalReward);
             plugin.getDataManager().setBrokenBlocks(player.getName(), 0);
 
-            MessageManager.sendMessage(
-                    player,
-                    "{message}&7[&6&lЛесорубка&7]&f Вы сдали &6" + brokenBlocks + "&f блоков и получили &6" +
-                            String.format("%.2f", totalReward)
-            );
+            MessageManager.sendMessage(player, formatMessage("command.claim.success", Map.of(
+                    "blocks", String.valueOf(brokenBlocks),
+                    "reward", String.format("%.2f", totalReward)
+            )));
             return true;
         }
 
         if (args[0].equalsIgnoreCase("reload")) {
             if (!sender.hasPermission("wlogger.admin")) {
-                sender.sendMessage("§cУ вас нет прав.");
+                sender.sendMessage(msg("command.noPermission"));
                 return true;
             }
 
             configManager.registerConfig("config.yml");
-            sender.sendMessage("§aКонфиг WLogger перезагружен.");
+            configManager.registerConfig("messeges.yml");
+            sender.sendMessage(msg("command.reload.success"));
             return true;
         }
 
         if (isOperation(args[0])) {
             if (!sender.hasPermission("wlogger.admin")) {
-                sender.sendMessage("§cУ вас нет прав.");
+                sender.sendMessage(msg("command.noPermission"));
                 return true;
             }
 
             if (args.length < 3) {
-                sender.sendMessage("§eИспользование: /wlogger <set|add|rem> <backpack|costmultiplier> <значение>");
+                sender.sendMessage(msg("command.usage.operation"));
                 return true;
             }
 
@@ -92,46 +93,46 @@ public class CommandsExecutor implements CommandExecutor, TabCompleter {
             if (target.equals("backpack")) {
                 Integer value = parseInt(args[2]);
                 if (value == null) {
-                    sender.sendMessage("§cЗначение должно быть целым числом.");
+                    sender.sendMessage(msg("command.valueMustBeInteger"));
                     return true;
                 }
 
                 int current = plugin.getDataManager().getBackpack("server-default");
                 int updated = applyOperation(current, value, operation);
                 if (updated < 1) {
-                    sender.sendMessage("§cЗначение backpack не может быть меньше 1.");
+                    sender.sendMessage(msg("command.backpackMin"));
                     return true;
                 }
 
                 plugin.getDataManager().setBackPack("server-default", updated);
-                sender.sendMessage("§aУстановлено server-default backpack: " + updated);
+                sender.sendMessage(formatMessage("command.backpackUpdated", Map.of("value", String.valueOf(updated))));
                 return true;
             }
 
             if (target.equals("costmultiplier") || target.equals("cosmultipler")) {
                 Double value = parseDouble(args[2]);
                 if (value == null) {
-                    sender.sendMessage("§cЗначение должно быть числом.");
+                    sender.sendMessage(msg("command.valueMustBeNumber"));
                     return true;
                 }
 
                 double current = plugin.getDataManager().getCostMultiplier("server-default");
                 double updated = applyOperation(current, value, operation);
                 if (updated <= 0.0D) {
-                    sender.sendMessage("§cЗначение costmultiplier должно быть больше 0.");
+                    sender.sendMessage(msg("command.costMultiplierMin"));
                     return true;
                 }
 
                 plugin.getDataManager().setCostMultiplier("server-default", updated);
-                sender.sendMessage("§aУстановлено server-default costmultiplier: " + String.format("%.2f", updated));
+                sender.sendMessage(formatMessage("command.costMultiplierUpdated", Map.of("value", String.format("%.2f", updated))));
                 return true;
             }
 
-            sender.sendMessage("§cПараметр должен быть backpack или costmultiplier.");
+            sender.sendMessage(msg("command.invalidParameter"));
             return true;
         }
 
-        sender.sendMessage("§cНеизвестная подкоманда.");
+        sender.sendMessage(msg("command.unknownSubcommand"));
         return true;
     }
 
@@ -205,8 +206,19 @@ public class CommandsExecutor implements CommandExecutor, TabCompleter {
     }
 
     private void sendUsage(CommandSender sender) {
-        sender.sendMessage("§e/wlogger claim");
-        sender.sendMessage("§e/wlogger reload");
-        sender.sendMessage("§e/wlogger <set|add|rem> <backpack|costmultiplier> <значение>");
+        for (String line : configManager.getConfig("messeges.yml").getStringList("command.usage.main")) {
+            sender.sendMessage(line);
+        }
+    }
+
+    private String msg(String path) {
+        return configManager.getConfig("messeges.yml").getString(path, path);
+    }
+    private String formatMessage(String path, Map<String, String> placeholders) {
+        String message = msg(path);
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            message = message.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+        return message;
     }
 }

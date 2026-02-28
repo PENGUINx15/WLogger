@@ -2,7 +2,6 @@ package me.penguinx13.wLogger;
 
 import me.penguinx13.wapi.Managers.ConfigManager;
 import me.penguinx13.wapi.Managers.MessageManager;
-import me.penguinx13.wapi.Managers.SQLiteManager;
 import me.penguinx13.wapi.Tree;
 import org.bukkit.Material;
 import org.bukkit.Tag;
@@ -13,7 +12,10 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 public class BlockBreakListener implements Listener {
     private final ConfigManager config;
@@ -55,7 +57,10 @@ public class BlockBreakListener implements Listener {
 
         if (currentBreaks < requiredBreaks) {
             breakProgress.put(key, currentBreaks);
-            MessageManager.sendMessage(player, "{action}&e" + currentBreaks + "&f/&6" + requiredBreaks);
+            MessageManager.sendMessage(player, formatMessage("break.progress", Map.of(
+                    "current", String.valueOf(currentBreaks),
+                    "required", String.valueOf(requiredBreaks)
+            )));
             event.setCancelled(true);
             return;
         }
@@ -66,7 +71,6 @@ public class BlockBreakListener implements Listener {
         Map<Block, TreeRegenerationTask.BlockSnapshot> treeState = new HashMap<>();
         for (Block log : tree.getLogs()) {
             treeState.put(log, TreeRegenerationTask.snapshot(log));
-
             log.setType(Material.AIR);
         }
 
@@ -75,17 +79,17 @@ public class BlockBreakListener implements Listener {
             treeState.putIfAbsent(leaf, TreeRegenerationTask.snapshot(leaf));
         }
 
-        MessageManager.sendMessage(player, "{action}&6" + requiredBreaks);
+        MessageManager.sendMessage(player, formatMessage("break.completed", Map.of("required", String.valueOf(requiredBreaks))));
 
-        if(plugin.getDataManager().getBackpack(player.getName()) <= (plugin.getDataManager().getBrokenBlocks(player.getName())+requiredBreaks)) {
-            MessageManager.sendMessage(player, "{message}&7[&6&lЛесорубка&7]&f Рюкзак переполнен, сдайте ресурсы &6/wlogger claim");
+        if (plugin.getDataManager().getBackpack(player.getName()) <= (plugin.getDataManager().getBrokenBlocks(player.getName()) + requiredBreaks)) {
+            MessageManager.sendMessage(player, msg("break.backpackFull"));
             plugin.getDataManager().setBrokenBlocks(player.getName(), plugin.getDataManager().getBackpack(player.getName()));
-        }else{
+        } else {
             plugin.getDataManager().setBrokenBlocks(player.getName(), plugin.getDataManager().getBrokenBlocks(player.getName()) + requiredBreaks);
         }
         new LeafDecayTask(leaves).runTaskTimer(plugin, 1L, 1L);
 
-        long cooldownSeconds =  Math.max(1,  config.getConfig("config.yml").getLong("tree.cooldown", 15L));
+        long cooldownSeconds = Math.max(1, config.getConfig("config.yml").getLong("tree.cooldown", 15L));
         new TreeRegenerationTask(treeState).runTaskLater(plugin, cooldownSeconds * 20L);
     }
 
@@ -100,7 +104,7 @@ public class BlockBreakListener implements Listener {
 
         if (!minWorld.equals(maxWorld)) {
             if (!worldMismatchWarningLogged) {
-                plugin.getLogger().warning("Некорректная конфигурация региона: location.min.world и location.max.world должны совпадать.");
+                plugin.getLogger().warning(msg("log.regionConfigMismatch"));
                 worldMismatchWarningLogged = true;
             }
             return false;
@@ -120,6 +124,17 @@ public class BlockBreakListener implements Listener {
         return block.getX() >= minX && block.getX() <= maxX
                 && block.getY() >= minY && block.getY() <= maxY
                 && block.getZ() >= minZ && block.getZ() <= maxZ;
+    }
+
+    private String msg(String path) {
+        return config.getConfig("messeges.yml").getString(path, path);
+    }
+    private String formatMessage(String path, Map<String, String> placeholders) {
+        String message = msg(path);
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            message = message.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+        return message;
     }
 
     private record BreakProgressKey(UUID playerId, String world, int x, int y, int z) {

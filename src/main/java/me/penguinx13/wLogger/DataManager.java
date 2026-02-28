@@ -1,5 +1,6 @@
 package me.penguinx13.wLogger;
 
+import me.penguinx13.wapi.Managers.ConfigManager;
 import me.penguinx13.wapi.Managers.SQLiteManager;
 
 import java.io.File;
@@ -8,12 +9,15 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Map;
 
 public class DataManager {
     private final SQLiteManager sqliteManager;
     private final String jdbcUrl;
+    private final ConfigManager configManager;
 
-    public DataManager(WLogger plugin) {
+    public DataManager(WLogger plugin, ConfigManager configManager) {
+        this.configManager = configManager;
         this.sqliteManager = new SQLiteManager(plugin, "players.db");
         this.sqliteManager.connect();
 
@@ -76,7 +80,7 @@ public class DataManager {
                 }
             }
         } catch (SQLException exception) {
-            throw new RuntimeException("Не удалось получить brokenBlocks для игрока " + playerName, exception);
+            throw new RuntimeException(formatMessage("error.getBrokenBlocks", Map.of("player", playerName)), exception);
         }
 
         return 0;
@@ -105,7 +109,7 @@ public class DataManager {
                 }
             }
         } catch (SQLException exception) {
-            throw new RuntimeException("Не удалось получить backpack для игрока " + playerName, exception);
+            throw new RuntimeException(formatMessage("error.getBackpack", Map.of("player", playerName)), exception);
         }
 
         return 0;
@@ -124,7 +128,7 @@ public class DataManager {
                 }
             }
         } catch (SQLException exception) {
-            throw new RuntimeException("Не удалось получить costmultiplier для игрока " + playerName, exception);
+            throw new RuntimeException(formatMessage("error.getCostMultiplier", Map.of("player", playerName)), exception);
         }
 
         return 1.0D;
@@ -139,7 +143,20 @@ public class DataManager {
                 playerName
         );
     }
-    public void disconnect(){
+
+    public void disconnect() {
         sqliteManager.disconnect();
+    }
+
+    private String msg(String path) {
+        return configManager.getConfig("messeges.yml").getString(path, path);
+    }
+
+    private String formatMessage(String path, Map<String, String> placeholders) {
+        String message = msg(path);
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            message = message.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+        return message;
     }
 }
