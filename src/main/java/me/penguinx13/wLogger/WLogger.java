@@ -1,10 +1,13 @@
 package me.penguinx13.wLogger;
 
 import me.penguinx13.wapi.Managers.ConfigManager;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Objects;
+
+import static org.bukkit.Bukkit.getServicesManager;
 
 public final class WLogger extends JavaPlugin {
     private ConfigManager configManager;
@@ -29,8 +32,14 @@ public final class WLogger extends JavaPlugin {
         BlockBreakListener blockBreakListener = new BlockBreakListener(configManager, this);
         getServer().getPluginManager().registerEvents(blockBreakListener, this);
 
-        Objects.requireNonNull(getCommand("wlogger")).setExecutor(new CommandsExecutor(this, configManager));
-        Objects.requireNonNull(getCommand("wlogger")).setTabCompleter(new CommandsExecutor(this, configManager));
+        CommandsExecutor commandsExecutor = new CommandsExecutor(this, configManager);
+        Objects.requireNonNull(getCommand("wlogger")).setExecutor(commandsExecutor);
+        Objects.requireNonNull(getCommand("wlogger")).setTabCompleter(commandsExecutor);
+
+        if (getServicesManager().getRegistration(Economy.class) == null) {
+            getLogger().info("Экономика отсутствует, плагин отключен");
+            onDisable();
+        }
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new Placeholders(this, configManager).register();
@@ -40,5 +49,6 @@ public final class WLogger extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        dataManager.disconnect();
     }
 }

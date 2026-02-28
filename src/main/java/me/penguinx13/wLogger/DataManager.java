@@ -139,4 +139,7 @@ public class DataManager {
                 playerName
         );
     }
+    public void disconnect(){
+        sqliteManager.disconnect();
+    }
 }

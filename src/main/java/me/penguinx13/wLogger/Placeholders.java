@@ -1,6 +1,7 @@
 package me.penguinx13.wLogger;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import me.penguinx13.wapi.Managers.ConfigManager;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +44,6 @@ public class Placeholders extends PlaceholderExpansion {
 
         if (player != null && params.equalsIgnoreCase("brokenblocks")) {
             return String.valueOf(plugin.getDataManager().getBrokenBlocks(player.getName()));
-        }
-        if (player != null && params.equalsIgnoreCase("cm")) {
-            return String.valueOf(plugin.getDataManager().getCostMultiplier(player.getName()));
         }
         if (player != null && params.equals("money")) {
             double rewardPerBlock = configManager.getConfig("config.yml").getDouble("tree.reward", 3.0D);
