@@ -19,6 +19,12 @@ public final class WLogger extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        if (getServicesManager().getRegistration(Economy.class) == null) {
+            getLogger().severe("Экономика отсутствует, плагин отключается.");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+
         configManager = new ConfigManager(this);
         configManager.registerConfig("config.yml");
 
@@ -35,11 +41,6 @@ public final class WLogger extends JavaPlugin {
         CommandsExecutor commandsExecutor = new CommandsExecutor(this, configManager);
         Objects.requireNonNull(getCommand("wlogger")).setExecutor(commandsExecutor);
         Objects.requireNonNull(getCommand("wlogger")).setTabCompleter(commandsExecutor);
-
-        if (getServicesManager().getRegistration(Economy.class) == null) {
-            getLogger().info("Экономика отсутствует, плагин отключен");
-            onDisable();
-        }
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new Placeholders(this, configManager).register();

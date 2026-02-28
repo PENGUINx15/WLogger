@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class CommandsExecutor implements CommandExecutor, TabCompleter {
     private final WLogger plugin;
@@ -43,7 +42,13 @@ public class CommandsExecutor implements CommandExecutor, TabCompleter {
                 return true;
             }
 
-            Economy economy = Objects.requireNonNull(plugin.getServer().getServicesManager().getRegistration(Economy.class)).getProvider();
+            var economyRegistration = plugin.getServer().getServicesManager().getRegistration(Economy.class);
+            if (economyRegistration == null || economyRegistration.getProvider() == null) {
+                MessageManager.sendMessage(player, "{message}&7[&6&lЛесорубка&7]&f Экономика недоступна, обратитесь к администрации.");
+                return true;
+            }
+
+            Economy economy = economyRegistration.getProvider();
             double rewardPerBlock = configManager.getConfig("config.yml").getDouble("tree.reward", 3.0D);
             double costMultiplier = plugin.getDataManager().getCostMultiplier(player.getName());
             double totalReward = brokenBlocks * rewardPerBlock * costMultiplier;

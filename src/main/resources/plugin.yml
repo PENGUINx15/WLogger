@@ -6,3 +6,8 @@ commands:
   wlogger:
     description: Main WLogger command
     usage: /<command>
+permissions:
+  wlogger.admin:
+    description: Access to WLogger admin commands
+    default: op
+
