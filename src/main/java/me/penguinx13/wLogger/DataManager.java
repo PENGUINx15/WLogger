@@ -1,7 +1,7 @@
 package me.penguinx13.wLogger;
 
-import me.penguinx13.wapi.Managers.ConfigManager;
-import me.penguinx13.wapi.Managers.SQLiteManager;
+import me.penguinx13.wapi.managers.ConfigManager;
+import me.penguinx13.wapi.managers.SQLiteManager;
 
 import java.io.File;
 import java.sql.Connection;

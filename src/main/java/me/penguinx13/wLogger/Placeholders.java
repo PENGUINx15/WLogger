@@ -1,7 +1,7 @@
 package me.penguinx13.wLogger;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.penguinx13.wapi.Managers.ConfigManager;
+import me.penguinx13.wapi.managers.ConfigManager;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
