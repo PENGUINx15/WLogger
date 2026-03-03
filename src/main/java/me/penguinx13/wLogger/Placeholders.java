@@ -1,7 +1,6 @@
 package me.penguinx13.wLogger;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
-import me.penguinx13.wapi.managers.ConfigManager;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -9,11 +8,9 @@ import org.jetbrains.annotations.Nullable;
 public class Placeholders extends PlaceholderExpansion {
 
     private final WLogger plugin;
-    private final ConfigManager configManager;
 
-    public Placeholders(WLogger plugin, ConfigManager configManager) {
+    public Placeholders(WLogger plugin) {
         this.plugin = plugin;
-        this.configManager = configManager;
     }
 
     @Override
@@ -43,25 +40,23 @@ public class Placeholders extends PlaceholderExpansion {
         }
 
         if (player != null && params.equalsIgnoreCase("brokenblocks")) {
-            return String.valueOf(plugin.getDataManager().getBrokenBlocks(player.getName()));
+            return String.valueOf(plugin.getPlayerStateService().getBrokenBlocks(player));
         }
+
         if (player != null && params.equals("money")) {
-            double rewardPerBlock = configManager.getConfig("config.yml").getDouble("tree.reward", 3.0D);
-            double costMultiplier = plugin.getDataManager().getCostMultiplier(player.getName());
-            double totalReward = plugin.getDataManager().getBrokenBlocks(player.getName()) * rewardPerBlock * costMultiplier;
-            return String.valueOf(totalReward);
+            return String.valueOf(plugin.getRewardService().calculatePotentialReward(player));
         }
 
         if (player != null && params.equals("backpack")) {
-            return String.valueOf(plugin.getDataManager().getBackpack(player.getName()));
+            return String.valueOf(plugin.getPlayerStateService().getBackpack(player));
         }
 
         if (player != null && params.equals("cm")) {
-            return String.valueOf(plugin.getDataManager().getCostMultiplier(player.getName()));
+            return String.valueOf(plugin.getPlayerStateService().getCostMultiplier(player));
         }
 
         if (params.startsWith("reward")) {
-            return String.valueOf(configManager.getConfig("config.yml").getDouble("tree.reward", 3.0D));
+            return String.valueOf(plugin.getConfigManager().getConfig("config.yml").getDouble("tree.reward", 3.0D));
         }
 
         return null;

@@ -1,21 +1,42 @@
 package me.penguinx13.wLogger;
 
-import me.penguinx13.wLogger.commands.Commands;
-
+import me.penguinx13.wLogger.command.Commands;
+import me.penguinx13.wLogger.config.PluginLifecycleService;
+import me.penguinx13.wLogger.data.repository.DataManager;
+import me.penguinx13.wLogger.data.repository.SQLiteDataManager;
+import me.penguinx13.wLogger.listener.BlockBreakListener;
+import me.penguinx13.wLogger.service.AdminPlayerStateService;
+import me.penguinx13.wLogger.service.PlayerStateService;
+import me.penguinx13.wLogger.service.RewardService;
+import me.penguinx13.wLogger.service.TreeHarvestService;
 import me.penguinx13.wapi.commands.integration.CommandFrameworkBootstrap;
 import me.penguinx13.wapi.managers.ConfigManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import static org.bukkit.Bukkit.getServicesManager;
-
 public final class WLogger extends JavaPlugin {
     private ConfigManager configManager;
     private DataManager dataManager;
+    private PlayerStateService playerStateService;
+    private RewardService rewardService;
+    private me.penguinx13.wLogger.DataManager legacyDataManager;
 
-    public DataManager getDataManager() {
-        return dataManager;
+    public PlayerStateService getPlayerStateService() {
+        return playerStateService;
+    }
+
+    public RewardService getRewardService() {
+        return rewardService;
+    }
+
+    public ConfigManager getConfigManager() {
+        return configManager;
+    }
+
+    @Deprecated
+    public me.penguinx13.wLogger.DataManager getDataManager() {
+        return legacyDataManager;
     }
 
     @Override
@@ -24,35 +45,47 @@ public final class WLogger extends JavaPlugin {
         configManager.registerConfig("config.yml");
         configManager.registerConfig("messeges.yml");
 
-        if (getServicesManager().getRegistration(Economy.class) == null) {
+        if (getServer().getServicesManager().getRegistration(Economy.class) == null) {
             getLogger().severe(configManager.getConfig("messeges.yml").getString("log.economyMissing", "log.economyMissing"));
-            Bukkit.getPluginManager().disablePlugin(this);
+            getServer().getPluginManager().disablePlugin(this);
             return;
         }
 
-        dataManager = new DataManager(this, configManager);
-        dataManager.createTable();
+        dataManager = new SQLiteDataManager(this);
+        dataManager.initialize().join();
 
+        playerStateService = new PlayerStateService(this, dataManager);
         int defaultBackpack = configManager.getConfig("config.yml").getInt("defaultValues.backpack", 50);
         double defaultCostMultiplier = configManager.getConfig("config.yml").getDouble("defaultValues.costmultiplier", 1.0D);
-        dataManager.ensureServerDefault(defaultBackpack, defaultCostMultiplier);
+        playerStateService.initialize(defaultBackpack, defaultCostMultiplier);
 
-        BlockBreakListener blockBreakListener = new BlockBreakListener(configManager, this);
-        getServer().getPluginManager().registerEvents(blockBreakListener, this);
+        TreeHarvestService treeHarvestService = new TreeHarvestService(this, configManager, playerStateService);
+        if (!treeHarvestService.validateRegionConfiguration()) {
+            throw new IllegalStateException("Invalid region configuration: location.min.world and location.max.world must match.");
+        }
 
-        new CommandFrameworkBootstrap(this).register(new Commands(this, configManager));
+        rewardService = new RewardService(this, configManager, playerStateService);
+        legacyDataManager = new me.penguinx13.wLogger.DataManager(playerStateService);
+        AdminPlayerStateService adminPlayerStateService = new AdminPlayerStateService(playerStateService);
+        PluginLifecycleService pluginLifecycleService = new PluginLifecycleService(configManager, playerStateService, treeHarvestService);
+
+        String progress = configManager.getConfig("messeges.yml").getString("break.progress", "break.progress");
+        String completed = configManager.getConfig("messeges.yml").getString("break.completed", "break.completed");
+        String backpackFull = configManager.getConfig("messeges.yml").getString("break.backpackFull", "break.backpackFull");
+        getServer().getPluginManager().registerEvents(new BlockBreakListener(treeHarvestService, progress, completed, backpackFull), this);
+
+        new CommandFrameworkBootstrap(this).register(new Commands(configManager, rewardService, adminPlayerStateService, pluginLifecycleService));
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new Placeholders(this, configManager).register();
+            new Placeholders(this).register();
             getLogger().info(configManager.getConfig("messeges.yml").getString("log.placeholdersRegistered", "log.placeholdersRegistered"));
         }
     }
 
     @Override
     public void onDisable() {
-        if (dataManager != null) {
-            dataManager.disconnect();
+        if (playerStateService != null) {
+            playerStateService.flushAndShutdown();
         }
     }
-
 }
