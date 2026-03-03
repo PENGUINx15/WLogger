@@ -1,8 +1,8 @@
 package me.penguinx13.wLogger;
 
+import me.penguinx13.wapi.Tree;
 import me.penguinx13.wapi.managers.ConfigManager;
 import me.penguinx13.wapi.managers.MessageManager;
-import me.penguinx13.wapi.Tree;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;

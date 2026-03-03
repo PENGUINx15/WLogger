@@ -1,12 +1,12 @@
 package me.penguinx13.wLogger;
 
-import me.penguinx13.wapi.commandframework.core.CommandRegistry;
+import me.penguinx13.wLogger.commands.Commands;
+
+import me.penguinx13.wapi.commands.integration.CommandFrameworkBootstrap;
 import me.penguinx13.wapi.managers.ConfigManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.Objects;
 
 import static org.bukkit.Bukkit.getServicesManager;
 
@@ -40,12 +40,7 @@ public final class WLogger extends JavaPlugin {
         BlockBreakListener blockBreakListener = new BlockBreakListener(configManager, this);
         getServer().getPluginManager().registerEvents(blockBreakListener, this);
 
-        CommandRegistry commandRegistry = new CommandRegistry(this);
-        commandRegistry.registerCommand(new CommandsExecutor(this, configManager));
-
-//        CommandsExecutor commandsExecutor = new CommandsExecutor(this, configManager);
-//        Objects.requireNonNull(getCommand("wlogger")).setExecutor(commandsExecutor);
-//        Objects.requireNonNull(getCommand("wlogger")).setTabCompleter(commandsExecutor);
+        new CommandFrameworkBootstrap(this).register(new Commands(this, configManager));
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new Placeholders(this, configManager).register();

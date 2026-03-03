@@ -12,21 +12,20 @@ import java.sql.SQLException;
 import java.util.Map;
 
 public class DataManager {
-    private final SQLiteManager sqliteManager;
-    private final String jdbcUrl;
-    private final ConfigManager configManager;
+    private SQLiteManager sqliteManager;
+    private String jdbcUrl;
+    private ConfigManager configManager;
 
     public DataManager(WLogger plugin, ConfigManager configManager) {
         this.configManager = configManager;
         this.sqliteManager = new SQLiteManager(plugin, "players.db");
-        this.sqliteManager.connect();
 
         File databaseFile = new File(plugin.getDataFolder(), "players.db");
         this.jdbcUrl = "jdbc:sqlite:" + databaseFile.getAbsolutePath();
     }
 
     public void createTable() {
-        sqliteManager.executeUpdate(
+            sqliteManager.update(
                 "CREATE TABLE IF NOT EXISTS players (" +
                         "playerName TEXT PRIMARY KEY," +
                         "backpack INTEGER NOT NULL DEFAULT 50," +
@@ -37,7 +36,7 @@ public class DataManager {
     }
 
     public void ensureServerDefault(int defaultBackpack, double defaultCostMultiplier) {
-        sqliteManager.executeUpdate(
+        sqliteManager.update(
                 "INSERT INTO players (playerName, backpack, costmultiplier, brokenBlocks) VALUES (?, ?, ?, ?) " +
                         "ON CONFLICT(playerName) DO NOTHING",
                 "server-default",
@@ -48,7 +47,7 @@ public class DataManager {
     }
 
     public void ensurePlayerExists(String playerName) {
-        sqliteManager.executeUpdate(
+        sqliteManager.update(
                 "INSERT INTO players (playerName, backpack, costmultiplier, brokenBlocks) " +
                         "SELECT ?, backpack, costmultiplier, 0 FROM players WHERE playerName = ? " +
                         "ON CONFLICT(playerName) DO NOTHING",
@@ -60,7 +59,7 @@ public class DataManager {
     public void setBrokenBlocks(String playerName, int blocksCount) {
         ensurePlayerExists(playerName);
 
-        sqliteManager.executeUpdate(
+        sqliteManager.update(
                 "UPDATE players SET brokenBlocks = ? WHERE playerName = ?",
                 blocksCount,
                 playerName
@@ -89,7 +88,7 @@ public class DataManager {
     public void setBackPack(String playerName, int blocksCount) {
         ensurePlayerExists(playerName);
 
-        sqliteManager.executeUpdate(
+        sqliteManager.update(
                 "UPDATE players SET backpack = ? WHERE playerName = ?",
                 blocksCount,
                 playerName
@@ -137,7 +136,7 @@ public class DataManager {
     public void setCostMultiplier(String playerName, double value) {
         ensurePlayerExists(playerName);
 
-        sqliteManager.executeUpdate(
+        sqliteManager.update(
                 "UPDATE players SET costmultiplier = ? WHERE playerName = ?",
                 value,
                 playerName
@@ -145,7 +144,7 @@ public class DataManager {
     }
 
     public void disconnect() {
-        sqliteManager.disconnect();
+        sqliteManager.shutdown();
     }
 
     private String msg(String path) {
