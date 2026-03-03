@@ -20,7 +20,6 @@ public final class WLogger extends JavaPlugin {
     private DataManager dataManager;
     private PlayerStateService playerStateService;
     private RewardService rewardService;
-    private me.penguinx13.wLogger.DataManager legacyDataManager;
 
     public PlayerStateService getPlayerStateService() {
         return playerStateService;
@@ -34,19 +33,14 @@ public final class WLogger extends JavaPlugin {
         return configManager;
     }
 
-    @Deprecated
-    public me.penguinx13.wLogger.DataManager getDataManager() {
-        return legacyDataManager;
-    }
-
     @Override
     public void onEnable() {
         configManager = new ConfigManager(this);
         configManager.registerConfig("config.yml");
-        configManager.registerConfig("messeges.yml");
+        configManager.registerConfig("messages.yml");
 
         if (getServer().getServicesManager().getRegistration(Economy.class) == null) {
-            getLogger().severe(configManager.getConfig("messeges.yml").getString("log.economyMissing", "log.economyMissing"));
+            getLogger().severe(configManager.getConfig("messages.yml").getString("log.economyMissing", "log.economyMissing"));
             getServer().getPluginManager().disablePlugin(this);
             return;
         }
@@ -65,20 +59,19 @@ public final class WLogger extends JavaPlugin {
         }
 
         rewardService = new RewardService(this, configManager, playerStateService);
-        legacyDataManager = new me.penguinx13.wLogger.DataManager(playerStateService);
         AdminPlayerStateService adminPlayerStateService = new AdminPlayerStateService(playerStateService);
         PluginLifecycleService pluginLifecycleService = new PluginLifecycleService(configManager, playerStateService, treeHarvestService);
 
-        String progress = configManager.getConfig("messeges.yml").getString("break.progress", "break.progress");
-        String completed = configManager.getConfig("messeges.yml").getString("break.completed", "break.completed");
-        String backpackFull = configManager.getConfig("messeges.yml").getString("break.backpackFull", "break.backpackFull");
+        String progress = configManager.getConfig("messages.yml").getString("break.progress", "break.progress");
+        String completed = configManager.getConfig("messages.yml").getString("break.completed", "break.completed");
+        String backpackFull = configManager.getConfig("messages.yml").getString("break.backpackFull", "break.backpackFull");
         getServer().getPluginManager().registerEvents(new BlockBreakListener(treeHarvestService, progress, completed, backpackFull), this);
 
         new CommandFrameworkBootstrap(this).register(new Commands(configManager, rewardService, adminPlayerStateService, pluginLifecycleService));
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new Placeholders(this).register();
-            getLogger().info(configManager.getConfig("messeges.yml").getString("log.placeholdersRegistered", "log.placeholdersRegistered"));
+            getLogger().info(configManager.getConfig("messages.yml").getString("log.placeholdersRegistered", "log.placeholdersRegistered"));
         }
     }
 

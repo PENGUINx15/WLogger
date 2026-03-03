@@ -111,7 +111,7 @@ public final class Commands {
     }
 
     private void sendUsage(CommandSender sender) {
-        List<String> usageLines = configManager.getConfig("messeges.yml").getStringList("command.usage.main");
+        List<String> usageLines = configManager.getConfig("messages.yml").getStringList("command.usage.main");
         if (usageLines.isEmpty()) {
             send(sender, msg("command.usage.operation"));
             return;
@@ -151,6 +151,6 @@ public final class Commands {
     }
 
     private String msg(String path) {
-        return configManager.getConfig("messeges.yml").getString(path, path);
+        return configManager.getConfig("messages.yml").getString(path, path);
     }
 }

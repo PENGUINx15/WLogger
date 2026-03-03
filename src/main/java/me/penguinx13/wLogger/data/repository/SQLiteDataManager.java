@@ -16,12 +16,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class SQLiteDataManager implements DataManager {
-    private final WLogger plugin;
     private final ExecutorService databaseExecutor;
     private final String jdbcUrl;
 
     public SQLiteDataManager(WLogger plugin) {
-        this.plugin = plugin;
         this.databaseExecutor = Executors.newSingleThreadExecutor(runnable -> {
             Thread thread = new Thread(runnable, "wlogger-db-thread");
             thread.setDaemon(true);

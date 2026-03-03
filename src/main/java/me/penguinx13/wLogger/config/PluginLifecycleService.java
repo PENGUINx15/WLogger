@@ -17,7 +17,7 @@ public final class PluginLifecycleService {
 
     public boolean safeReload() {
         configManager.registerConfig("config.yml");
-        configManager.registerConfig("messeges.yml");
+        configManager.registerConfig("messages.yml");
 
         int defaultBackpack = configManager.getConfig("config.yml").getInt("defaultValues.backpack", 50);
         double defaultCostMultiplier = configManager.getConfig("config.yml").getDouble("defaultValues.costmultiplier", 1.0D);
