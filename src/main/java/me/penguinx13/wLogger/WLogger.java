@@ -3,7 +3,6 @@ package me.penguinx13.wLogger;
 import me.penguinx13.wLogger.command.Commands;
 import me.penguinx13.wLogger.config.PluginLifecycleService;
 import me.penguinx13.wLogger.data.repository.DataManager;
-import me.penguinx13.wLogger.data.repository.SQLiteDataManager;
 import me.penguinx13.wLogger.listener.BlockBreakListener;
 import me.penguinx13.wLogger.service.AdminPlayerStateService;
 import me.penguinx13.wLogger.service.PlayerStateService;
@@ -11,6 +10,7 @@ import me.penguinx13.wLogger.service.RewardService;
 import me.penguinx13.wLogger.service.TreeHarvestService;
 import me.penguinx13.wapi.commands.integration.CommandFrameworkBootstrap;
 import me.penguinx13.wapi.managers.ConfigManager;
+import me.penguinx13.wapi.managers.SQLiteManager;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -45,7 +45,7 @@ public final class WLogger extends JavaPlugin {
             return;
         }
 
-        dataManager = new SQLiteDataManager(this);
+        dataManager = new SQLiteManager(this, "players.db");
         dataManager.initialize().join();
 
         playerStateService = new PlayerStateService(this, dataManager);
