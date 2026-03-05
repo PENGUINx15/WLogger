@@ -1,161 +1,73 @@
 package me.penguinx13.wLogger.data;
 
-import me.penguinx13.wapi.managers.ConfigManager;
-import me.penguinx13.wapi.managers.SQLiteManager;
+import me.penguinx13.wapi.orm.annotations.Column;
+import me.penguinx13.wapi.orm.annotations.Id;
+import me.penguinx13.wapi.orm.annotations.Table;
 
-import java.io.File;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Map;
+import java.util.UUID;
 
-public class DataManager {
-    private SQLiteManager sqliteManager;
-    private String jdbcUrl;
-    private ConfigManager configManager;
+@Table("example_player_stats")
+public final class DataManager {
 
-    public DataManager(WLogger plugin, ConfigManager configManager) {
-        this.configManager = configManager;
-        this.sqliteManager = new SQLiteManager(plugin, "players.db");
+    @Id
+    private UUID uuid;
 
-        File databaseFile = new File(plugin.getDataFolder(), "players.db");
-        this.jdbcUrl = "jdbc:sqlite:" + databaseFile.getAbsolutePath();
+    @Column
+    private int backpack;
+
+    @Column
+    private double costmultiplier;
+
+    @Column
+    private int brokenblocks;
+
+    public DataManager() {
     }
 
-    public void createTable() {
-        sqliteManager.update(
-                "CREATE TABLE IF NOT EXISTS players (" +
-                        "playerName TEXT PRIMARY KEY," +
-                        "backpack INTEGER NOT NULL DEFAULT 50," +
-                        "costmultiplier DOUBLE NOT NULL DEFAULT 1.0," +
-                        "brokenBlocks INTEGER NOT NULL DEFAULT 0" +
-                        ")"
-        );
+    public DataManager(UUID uuid) {
+        this.uuid = uuid;
+        this.backpack = 50;
+        this.costmultiplier = 1.0;
+        this.brokenblocks = 0;
     }
 
-    public void ensureServerDefault(int defaultBackpack, double defaultCostMultiplier) {
-        sqliteManager.update(
-                "INSERT INTO players (playerName, backpack, costmultiplier, brokenBlocks) VALUES (?, ?, ?, ?) " +
-                        "ON CONFLICT(playerName) DO NOTHING",
-                "server-default",
-                defaultBackpack,
-                defaultCostMultiplier,
-                0
-        );
+    public UUID getUuid() {
+        return uuid;
     }
 
-    public void ensurePlayerExists(String playerName) {
-        sqliteManager.update(
-                "INSERT INTO players (playerName, backpack, costmultiplier, brokenBlocks) " +
-                        "SELECT ?, backpack, costmultiplier, 0 FROM players WHERE playerName = ? " +
-                        "ON CONFLICT(playerName) DO NOTHING",
-                playerName,
-                "server-default"
-        );
+    public int getBackpack() {
+        return backpack;
     }
 
-    public void setBrokenBlocks(String playerName, int blocksCount) {
-        ensurePlayerExists(playerName);
-
-        sqliteManager.update(
-                "UPDATE players SET brokenBlocks = ? WHERE playerName = ?",
-                blocksCount,
-                playerName
-        );
+    public void addBackpack(int amount) {
+        this.backpack += amount;
     }
 
-    public int getBrokenBlocks(String playerName) {
-        try (Connection connection = DriverManager.getConnection(jdbcUrl);
-             PreparedStatement statement = connection.prepareStatement(
-                     "SELECT brokenBlocks FROM players WHERE playerName = ?"
-             )) {
-            statement.setString(1, playerName);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getInt("brokenBlocks");
-                }
-            }
-        } catch (SQLException exception) {
-            throw new RuntimeException(formatMessage("error.getBrokenBlocks", Map.of("player", playerName)), exception);
-        }
-
-        return 0;
+    public void setBackpack(int amount) {
+        this.backpack = amount;
     }
 
-    public void setBackPack(String playerName, int blocksCount) {
-        ensurePlayerExists(playerName);
-
-        sqliteManager.update(
-                "UPDATE players SET backpack = ? WHERE playerName = ?",
-                blocksCount,
-                playerName
-        );
+    public double getCostMultiplier() {
+        return costmultiplier;
     }
 
-    public int getBackpack(String playerName) {
-        try (Connection connection = DriverManager.getConnection(jdbcUrl);
-             PreparedStatement statement = connection.prepareStatement(
-                     "SELECT backpack FROM players WHERE playerName = ?"
-             )) {
-            statement.setString(1, playerName);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getInt("backpack");
-                }
-            }
-        } catch (SQLException exception) {
-            throw new RuntimeException(formatMessage("error.getBackpack", Map.of("player", playerName)), exception);
-        }
-
-        return 0;
+    public void addCostMultiplier(double amount) {
+        this.costmultiplier += amount;
     }
 
-    public double getCostMultiplier(String playerName) {
-        try (Connection connection = DriverManager.getConnection(jdbcUrl);
-             PreparedStatement statement = connection.prepareStatement(
-                     "SELECT costmultiplier FROM players WHERE playerName = ?"
-             )) {
-            statement.setString(1, playerName);
-
-            try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    return resultSet.getDouble("costmultiplier");
-                }
-            }
-        } catch (SQLException exception) {
-            throw new RuntimeException(formatMessage("error.getCostMultiplier", Map.of("player", playerName)), exception);
-        }
-
-        return 1.0D;
+    public void setCostMultiplier(double amount) {
+        this.costmultiplier = amount;
     }
 
-    public void setCostMultiplier(String playerName, double value) {
-        ensurePlayerExists(playerName);
-
-        sqliteManager.update(
-                "UPDATE players SET costmultiplier = ? WHERE playerName = ?",
-                value,
-                playerName
-        );
+    public int getBrokenBlocks() {
+        return brokenblocks;
     }
 
-    public void disconnect() {
-        sqliteManager.shutdown();
+    public void addBrokenBlocks(int amount) {
+        this.brokenblocks += amount;
     }
 
-    private String msg(String path) {
-        return configManager.getConfig("messeges.yml").getString(path, path);
-    }
-
-    private String formatMessage(String path, Map<String, String> placeholders) {
-        String message = msg(path);
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            message = message.replace("{" + entry.getKey() + "}", entry.getValue());
-        }
-        return message;
+    public void setBrokenBlocks(int amount) {
+        this.brokenblocks = amount;
     }
 }

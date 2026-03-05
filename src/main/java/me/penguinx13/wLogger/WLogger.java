@@ -2,28 +2,25 @@ package me.penguinx13.wLogger;
 
 import me.penguinx13.wLogger.command.Commands;
 import me.penguinx13.wLogger.config.PluginLifecycleService;
-import me.penguinx13.wLogger.data.repository.DataManager;
+import me.penguinx13.wLogger.data.DataManager;
 import me.penguinx13.wLogger.listener.BlockBreakListener;
-import me.penguinx13.wLogger.service.AdminPlayerStateService;
-import me.penguinx13.wLogger.service.PlayerStateService;
 import me.penguinx13.wLogger.service.RewardService;
 import me.penguinx13.wLogger.service.TreeHarvestService;
-import me.penguinx13.wapi.commands.integration.CommandFrameworkBootstrap;
 import me.penguinx13.wapi.managers.ConfigManager;
-import me.penguinx13.wapi.managers.SQLiteManager;
+import me.penguinx13.wapi.orm.Repository;
+import me.penguinx13.wapi.orm.SQLiteManager;
+import me.penguinx13.wapi.orm.SimpleORM;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.UUID;
+
 public final class WLogger extends JavaPlugin {
     private ConfigManager configManager;
-    private DataManager dataManager;
-    private PlayerStateService playerStateService;
+    private SQLiteManager sqliteManager;
     private RewardService rewardService;
 
-    public PlayerStateService getPlayerStateService() {
-        return playerStateService;
-    }
 
     public RewardService getRewardService() {
         return rewardService;
@@ -45,13 +42,12 @@ public final class WLogger extends JavaPlugin {
             return;
         }
 
-        dataManager = new SQLiteManager(this, "players.db");
-        dataManager.initialize().join();
+        sqliteManager = new SQLiteManager(getDataFolder(), "example.db", Bukkit::isPrimaryThread);
 
-        playerStateService = new PlayerStateService(this, dataManager);
-        int defaultBackpack = configManager.getConfig("config.yml").getInt("defaultValues.backpack", 50);
-        double defaultCostMultiplier = configManager.getConfig("config.yml").getDouble("defaultValues.costmultiplier", 1.0D);
-        playerStateService.initialize(defaultBackpack, defaultCostMultiplier);
+        SimpleORM orm = new SimpleORM(sqliteManager);
+        orm.registerEntity(DataManager.class);
+        Repository<DataManager, UUID> repository = orm.getRepository(DataManager.class);
+
 
         TreeHarvestService treeHarvestService = new TreeHarvestService(this, configManager, playerStateService);
         if (!treeHarvestService.validateRegionConfiguration()) {
@@ -59,7 +55,6 @@ public final class WLogger extends JavaPlugin {
         }
 
         rewardService = new RewardService(this, configManager, playerStateService);
-        AdminPlayerStateService adminPlayerStateService = new AdminPlayerStateService(playerStateService);
         PluginLifecycleService pluginLifecycleService = new PluginLifecycleService(configManager, playerStateService, treeHarvestService);
 
         String progress = configManager.getConfig("messages.yml").getString("break.progress", "break.progress");
@@ -67,7 +62,7 @@ public final class WLogger extends JavaPlugin {
         String backpackFull = configManager.getConfig("messages.yml").getString("break.backpackFull", "break.backpackFull");
         getServer().getPluginManager().registerEvents(new BlockBreakListener(treeHarvestService, progress, completed, backpackFull), this);
 
-        new CommandFrameworkBootstrap(this).register(new Commands(configManager, rewardService, adminPlayerStateService, pluginLifecycleService));
+        new CommandFrameworkBootstrap(this).register(new Commands(configManager, rewardService, pluginLifecycleService));
 
         if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
             new Placeholders(this).register();

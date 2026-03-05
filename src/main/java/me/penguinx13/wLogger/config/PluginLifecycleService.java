@@ -1,6 +1,5 @@
 package me.penguinx13.wLogger.config;
 
-import me.penguinx13.wLogger.service.PlayerStateService;
 import me.penguinx13.wLogger.service.TreeHarvestService;
 import me.penguinx13.wapi.managers.ConfigManager;
 

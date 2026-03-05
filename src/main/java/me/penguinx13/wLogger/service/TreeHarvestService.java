@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class TreeHarvestService {
     private final WLogger plugin;
     private final ConfigManager configManager;
-    private final PlayerStateService playerStateService;
     private final Map<BreakProgressKey, Integer> breakProgress;
     private volatile boolean worldMismatchWarningLogged;
 

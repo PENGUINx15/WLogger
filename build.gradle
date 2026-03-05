@@ -23,7 +23,6 @@ dependencies {
     compileOnly "com.github.MilkBowl:VaultAPI:1.7"
 
     compileOnly "com.github.PENGUINx15.WAPI:WAPI:main-SNAPSHOT"
-
 }
 
 

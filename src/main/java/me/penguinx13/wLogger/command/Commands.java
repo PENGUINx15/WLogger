@@ -24,7 +24,6 @@ public final class Commands {
     public Commands(
             ConfigManager configManager,
             RewardService rewardService,
-            AdminPlayerStateService adminPlayerStateService,
             PluginLifecycleService lifecycleService
     ) {
         this.configManager = configManager;

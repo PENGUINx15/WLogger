@@ -10,16 +10,13 @@ import me.penguinx13.wLogger.util.RewardCalculator;
 public final class RewardService {
     private final WLogger plugin;
     private final ConfigManager configManager;
-    private final PlayerStateService playerStateService;
 
-    public RewardService(WLogger plugin, ConfigManager configManager, PlayerStateService playerStateService) {
+    public RewardService(WLogger plugin, ConfigManager configManager) {
         this.plugin = plugin;
         this.configManager = configManager;
-        this.playerStateService = playerStateService;
     }
 
     public ClaimResult claim(Player player) {
-        int brokenBlocks = playerStateService.getBrokenBlocks(player);
         if (brokenBlocks <= 0) {
             return ClaimResult.nothing();
         }
@@ -29,7 +26,6 @@ public final class RewardService {
         double totalReward = RewardCalculator.calculate(brokenBlocks, rewardPerBlock, playerStateService.getCostMultiplier(player));
 
         economy.depositPlayer(player, totalReward);
-        playerStateService.setBrokenBlocks(player, 0);
         return ClaimResult.success(brokenBlocks, totalReward);
     }
 
