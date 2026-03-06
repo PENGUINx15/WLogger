@@ -27,12 +27,6 @@ import java.util.UUID;
 public final class WLogger extends JavaPlugin {
     private ConfigManager configManager;
     private SQLiteManager sqliteManager;
-    private RewardService rewardService;
-
-
-    public RewardService getRewardService() {
-        return rewardService;
-    }
 
     public ConfigManager getConfigManager() {
         return configManager;
@@ -57,7 +51,7 @@ public final class WLogger extends JavaPlugin {
         Repository<DataManager, UUID> repository = orm.getRepository(DataManager.class);
 
 
-        TreeHarvestService treeHarvestService = new TreeHarvestService(this, configManager);
+        TreeHarvestService treeHarvestService = new TreeHarvestService(this, configManager, repository);
         if (!treeHarvestService.validateRegionConfiguration()) {
             throw new IllegalStateException("Invalid region configuration: location.min.world and location.max.world must match.");
         }

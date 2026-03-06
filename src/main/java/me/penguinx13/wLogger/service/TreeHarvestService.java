@@ -3,8 +3,10 @@ package me.penguinx13.wLogger.service;
 import me.penguinx13.wLogger.LeafDecayTask;
 import me.penguinx13.wLogger.TreeRegenerationTask;
 import me.penguinx13.wLogger.WLogger;
+import me.penguinx13.wLogger.data.DataManager;
 import me.penguinx13.wapi.Tree;
 import me.penguinx13.wapi.managers.ConfigManager;
+import me.penguinx13.wapi.orm.Repository;
 import org.bukkit.Material;
 import org.bukkit.Tag;
 import org.bukkit.block.Block;
@@ -20,12 +22,19 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class TreeHarvestService {
     private final WLogger plugin;
     private final ConfigManager configManager;
+    private final Repository<DataManager, UUID> repository;
+
     private final Map<BreakProgressKey, Integer> breakProgress;
     private volatile boolean worldMismatchWarningLogged;
 
-    public TreeHarvestService(WLogger plugin, ConfigManager configManager) {
+    public TreeHarvestService(
+            WLogger plugin,
+            ConfigManager configManager,
+            Repository<DataManager, UUID> repository
+    ) {
         this.plugin = plugin;
         this.configManager = configManager;
+        this.repository = repository;
         this.breakProgress = new ConcurrentHashMap<>();
         this.worldMismatchWarningLogged = false;
     }
@@ -70,13 +79,30 @@ public final class TreeHarvestService {
             treeState.putIfAbsent(leaf, TreeRegenerationTask.snapshot(leaf));
         }
 
-        int backpack = playerStateService.getBackpack(player);
-        int brokenBlocks = playerStateService.getBrokenBlocks(player);
+        int backpack = repository.findByIdAsync(player.getUniqueId())
+                .thenCompose(existing -> {
+                    DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
+                    return data.getBackpack();
+                });
+        int brokenBlocks = repository.findByIdAsync(player.getUniqueId())
+                .thenCompose(existing -> {
+                    DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
+                    return data.getBrokenBlocks();
+                });
+
         boolean full = backpack <= (brokenBlocks + requiredBreaks);
         if (full) {
-            playerStateService.setBrokenBlocks(player, backpack);
+            repository.findByIdAsync(player.getUniqueId())
+                    .thenCompose(existing -> {
+                        DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
+                        return data.setBrokenBlocks(backpack);
+                    });
         } else {
-            playerStateService.setBrokenBlocks(player, brokenBlocks + requiredBreaks);
+            repository.findByIdAsync(player.getUniqueId())
+                    .thenCompose(existing -> {
+                        DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
+                        return data.setBrokenBlocks(brokenBlocks + requiredBreaks);
+                    });
         }
 
         new LeafDecayTask(leaves).runTaskTimer(plugin, 1L, 1L);
