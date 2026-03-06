@@ -15,8 +15,9 @@ command:
   valueMustBeNumber: "{message}§cЗначение должно быть числом."
   backpackMin: "{message}§cЗначение backpack не может быть меньше 1."
   costMultiplierMin: "{message}§cЗначение costmultiplier должно быть больше 0."
-  backpackUpdated: "{message}§aУстановлено server-default backpack: {value}"
-  costMultiplierUpdated: "{message}§aУстановлено server-default costmultiplier: {value}"
+  set: "{message}&7[&6&lW&f&lLogger&7] &6{parameter} &fдля игрока &6{target}&f изменено на &6{value}&f."
+  add: "{message}&7[&6&lW&f&lLogger&7] &6{parameter} &fдля игрока &6{target}&f увеличено на &6{value}&f."
+  rem: "{message}&7[&6&lW&f&lLogger&7] &6{parameter} &fдля игрока &6{target}&f понижено на &6{value}&f."
   claim:
     nothingToClaim: "{message}&7[&6&lЛесорубка&7]&f Нечего сдавать."
     economyUnavailable: "{message}&7[&6&lЛесорубка&7]&f Экономика недоступна, обратитесь к администрации."

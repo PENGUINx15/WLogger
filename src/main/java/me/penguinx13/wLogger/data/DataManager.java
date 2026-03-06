@@ -6,7 +6,7 @@ import me.penguinx13.wapi.orm.annotations.Table;
 
 import java.util.UUID;
 
-@Table("example_player_stats")
+@Table("players")
 public final class DataManager {
 
     @Id
@@ -39,10 +39,6 @@ public final class DataManager {
         return backpack;
     }
 
-    public void addBackpack(int amount) {
-        this.backpack += amount;
-    }
-
     public void setBackpack(int amount) {
         this.backpack = amount;
     }
@@ -51,9 +47,6 @@ public final class DataManager {
         return costmultiplier;
     }
 
-    public void addCostMultiplier(double amount) {
-        this.costmultiplier += amount;
-    }
 
     public void setCostMultiplier(double amount) {
         this.costmultiplier = amount;
@@ -61,10 +54,6 @@ public final class DataManager {
 
     public int getBrokenBlocks() {
         return brokenblocks;
-    }
-
-    public void addBrokenBlocks(int amount) {
-        this.brokenblocks += amount;
     }
 
     public void setBrokenBlocks(int amount) {

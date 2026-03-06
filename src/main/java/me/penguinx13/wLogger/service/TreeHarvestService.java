@@ -23,10 +23,9 @@ public final class TreeHarvestService {
     private final Map<BreakProgressKey, Integer> breakProgress;
     private volatile boolean worldMismatchWarningLogged;
 
-    public TreeHarvestService(WLogger plugin, ConfigManager configManager, PlayerStateService playerStateService) {
+    public TreeHarvestService(WLogger plugin, ConfigManager configManager) {
         this.plugin = plugin;
         this.configManager = configManager;
-        this.playerStateService = playerStateService;
         this.breakProgress = new ConcurrentHashMap<>();
         this.worldMismatchWarningLogged = false;
     }

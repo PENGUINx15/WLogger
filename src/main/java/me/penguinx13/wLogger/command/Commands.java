@@ -1,35 +1,36 @@
 package me.penguinx13.wLogger.command;
 
-import me.penguinx13.wLogger.config.PluginLifecycleService;
-import me.penguinx13.wLogger.service.AdminPlayerStateService;
-import me.penguinx13.wLogger.service.RewardService;
+import me.penguinx13.wLogger.WLogger;
+import me.penguinx13.wLogger.data.DataManager;
 import me.penguinx13.wapi.commands.annotations.Arg;
 import me.penguinx13.wapi.commands.annotations.RootCommand;
 import me.penguinx13.wapi.commands.annotations.SubCommand;
 import me.penguinx13.wapi.managers.ConfigManager;
 import me.penguinx13.wapi.managers.MessageManager;
+import me.penguinx13.wapi.orm.Repository;
+import net.milkbowl.vault.economy.Economy;
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RootCommand("wlogger")
 public final class Commands {
+    private final WLogger plugin;
     private final ConfigManager configManager;
-    private final RewardService rewardService;
-    private final AdminPlayerStateService adminPlayerStateService;
-    private final PluginLifecycleService lifecycleService;
+    private final Repository<DataManager, UUID> repository;
 
     public Commands(
+            WLogger plugin,
             ConfigManager configManager,
-            RewardService rewardService,
-            PluginLifecycleService lifecycleService
+            Repository<DataManager, UUID> repository
     ) {
+        this.plugin = plugin;
         this.configManager = configManager;
-        this.rewardService = rewardService;
-        this.adminPlayerStateService = adminPlayerStateService;
-        this.lifecycleService = lifecycleService;
+        this.repository = repository;
     }
 
     @SubCommand("")
@@ -39,117 +40,159 @@ public final class Commands {
 
     @SubCommand(value = "claim", playerOnly = true)
     public void claim(Player player) {
-        RewardService.ClaimResult claimResult = rewardService.claim(player);
-        if (!claimResult.success()) {
-            MessageManager.sendMessage(player, msg("command.claim.nothingToClaim"));
-            return;
-        }
 
-        MessageManager.sendMessage(player, msg("command.claim.success"), Map.of(
-                "blocks", String.valueOf(claimResult.blocks()),
-                "reward", String.format("%.2f", claimResult.reward())
-        ));
-    }
+        repository.findByIdAsync(player.getUniqueId())
+                .thenCompose(existing -> {
+                    DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
+                    if (data.getBrokenBlocks() == 0) {
+                        return repository.saveAsync(data)
+                                .thenRun(() -> runSync(() ->
+                                        MessageManager.sendMessage(player, msg("command.claim.nothingToClaim"))
+                                ));
+                    }
+                    double reward = data.getBrokenBlocks() * data.getCostMultiplier() * configManager.getConfig("config.yml").getInt("tree.reward");
+                    Economy economy = Bukkit.getServicesManager().getRegistration(Economy.class).getProvider();
+                    economy.depositPlayer(player, reward);
+                    return repository.saveAsync(data)
+                            .thenRun(() -> runSync(() ->
+                                    MessageManager.sendMessage(player, msg("command.claim.success"), Map.of(
+                                            "blocks", String.valueOf(data.getBrokenBlocks()),
+                                            "reward", String.format("%.2f", reward)
+                                    ))));
 
-    @SubCommand(value = "reload", permission = "wlogger.admin")
-    public void reload(CommandSender sender) {
-        boolean regionOk = lifecycleService.safeReload();
-        send(sender, msg("command.reload.success"));
-        if (!regionOk) {
-            send(sender, msg("log.regionConfigMismatch"));
-        }
+                }
+                );
+
+
+
     }
 
     @SubCommand(value = "set", permission = "wlogger.admin")
-    public void set(CommandSender sender, @Arg("parameter") String parameter, @Arg("target") Player target, @Arg("value") String value) {
-        processAdminUpdate(sender, AdminPlayerStateService.Operation.SET, parameter, target, value);
+    public void set(CommandSender sender,
+                    @Arg(value = "parameter", optional = true) String parameter,
+                    @Arg("target") Player target,
+                    @Arg("value") Integer value)
+    {
+        switch (parameter){
+            case "backpack":
+                repository.findByIdAsync(target.getUniqueId())
+                        .thenCompose(existing -> {
+                            DataManager data = existing.orElseGet(() -> new DataManager(target.getUniqueId()));
+                            data.setBackpack(value);
+                            return repository.saveAsync(data)
+                                    .thenRun(() -> runSync(() ->
+                                            MessageManager.sendMessage((Player) sender,msg("command.set"),
+                                                    Map.of(
+                                                    "parameter", parameter,
+                                                    "target", target,
+                                                    "value", value))
+                                    ));});
+            case "costmultiplier":
+                repository.findByIdAsync(target.getUniqueId())
+                        .thenCompose(existing -> {
+                            DataManager data = existing.orElseGet(() -> new DataManager(target.getUniqueId()));
+                            data.setBackpack(value);
+                            return repository.saveAsync(data)
+                                    .thenRun(() -> runSync(() ->MessageManager.sendMessage((Player) sender,msg("command.set"),
+                                            Map.of(
+                                                    "parameter", parameter,
+                                                    "target", target,
+                                                    "value", value))
+                                    ));});
+        }
     }
 
     @SubCommand(value = "add", permission = "wlogger.admin")
-    public void add(CommandSender sender, @Arg("parameter") String parameter, @Arg("target") Player target, @Arg("value") String value) {
-        processAdminUpdate(sender, AdminPlayerStateService.Operation.ADD, parameter, target, value);
+    public void add(CommandSender sender,
+                    @Arg(value = "parameter", optional = true) String parameter,
+                    @Arg("target") Player target,
+                    @Arg("value") Integer value)
+    {
+        switch (parameter){
+            case "backpack":
+                repository.findByIdAsync(target.getUniqueId())
+                        .thenCompose(existing -> {
+                            DataManager data = existing.orElseGet(() -> new DataManager(target.getUniqueId()));
+                            data.setBackpack(data.getBackpack() + value);
+                            return repository.saveAsync(data)
+                                    .thenRun(() -> runSync(() ->
+                                            MessageManager.sendMessage((Player) sender,msg("command.add"),
+                                                    Map.of(
+                                                            "parameter", parameter,
+                                                            "target", target,
+                                                            "value", value))
+                                    ));});
+            case "costmultiplier":
+                repository.findByIdAsync(target.getUniqueId())
+                        .thenCompose(existing -> {
+                            DataManager data = existing.orElseGet(() -> new DataManager(target.getUniqueId()));
+                            data.setCostMultiplier(data.getCostMultiplier() + value);
+                            return repository.saveAsync(data)
+                                    .thenRun(() -> runSync(() ->MessageManager.sendMessage((Player) sender,msg("command.set"),
+                                            Map.of(
+                                                    "parameter", parameter,
+                                                    "target", target,
+                                                    "value", value))
+                                    ));});
+        }
     }
 
     @SubCommand(value = "rem", permission = "wlogger.admin")
-    public void rem(CommandSender sender, @Arg("parameter") String parameter, @Arg("target") Player target, @Arg("value") String value) {
-        processAdminUpdate(sender, AdminPlayerStateService.Operation.REM, parameter, target, value);
-    }
-
-    private void processAdminUpdate(CommandSender sender, AdminPlayerStateService.Operation operation, String parameter, Player target, String rawValue) {
-        if (parameter.equalsIgnoreCase("backpack")) {
-            Integer value = parseInt(rawValue);
-            if (value == null) {
-                send(sender, msg("command.valueMustBeInteger"));
-                return;
-            }
-            try {
-                int updated = adminPlayerStateService.updateBackpack(target, operation, value);
-                send(sender, format(msg("command.backpackUpdated"), Map.of("value", String.valueOf(updated))));
-            } catch (IllegalArgumentException exception) {
-                send(sender, msg("command.backpackMin"));
-            }
-            return;
+    public void rem(CommandSender sender,
+                    @Arg(value = "parameter", optional = true) String parameter,
+                    @Arg("target") Player target,
+                    @Arg("value") Integer value)
+    {
+        switch (parameter){
+            case "backpack":
+                repository.findByIdAsync(target.getUniqueId())
+                        .thenCompose(existing -> {
+                            DataManager data = existing.orElseGet(() -> new DataManager(target.getUniqueId()));
+                            data.setBackpack(data.getBackpack() - value);
+                            return repository.saveAsync(data)
+                                    .thenRun(() -> runSync(() ->
+                                            MessageManager.sendMessage((Player) sender,msg("command.add"),
+                                                    Map.of(
+                                                            "parameter", parameter,
+                                                            "target", target,
+                                                            "value", value))
+                                    ));});
+            case "costmultiplier":
+                repository.findByIdAsync(target.getUniqueId())
+                        .thenCompose(existing -> {
+                            DataManager data = existing.orElseGet(() -> new DataManager(target.getUniqueId()));
+                            data.setCostMultiplier(data.getCostMultiplier() - value);
+                            return repository.saveAsync(data)
+                                    .thenRun(() -> runSync(() ->MessageManager.sendMessage((Player) sender,msg("command.set"),
+                                            Map.of(
+                                                    "parameter", parameter,
+                                                    "target", target,
+                                                    "value", value))
+                                    ));});
         }
-
-        if (parameter.equalsIgnoreCase("costmultiplier")) {
-            Double value = parseDouble(rawValue);
-            if (value == null) {
-                send(sender, msg("command.valueMustBeNumber"));
-                return;
-            }
-            try {
-                double updated = adminPlayerStateService.updateCostMultiplier(target, operation, value);
-                send(sender, format(msg("command.costMultiplierUpdated"), Map.of("value", String.format("%.2f", updated))));
-            } catch (IllegalArgumentException exception) {
-                send(sender, msg("command.costMultiplierMin"));
-            }
-            return;
-        }
-
-        send(sender, msg("command.invalidParameter"));
     }
 
     private void sendUsage(CommandSender sender) {
         List<String> usageLines = configManager.getConfig("messages.yml").getStringList("command.usage.main");
         if (usageLines.isEmpty()) {
-            send(sender, msg("command.usage.operation"));
+
             return;
         }
 
         for (String line : usageLines) {
-            send(sender, line);
+            MessageManager.sendMessage((Player) sender, line);
         }
     }
 
-    private void send(CommandSender sender, String message) {
-        sender.sendMessage(message);
-    }
-
-    private String format(String message, Map<String, String> placeholders) {
-        String result = message;
-        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
-            result = result.replace("{" + entry.getKey() + "}", entry.getValue());
-        }
-        return result;
-    }
-
-    private Integer parseInt(String raw) {
-        try {
-            return Integer.parseInt(raw);
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
-    }
-
-    private Double parseDouble(String raw) {
-        try {
-            return Double.parseDouble(raw);
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
-    }
 
     private String msg(String path) {
         return configManager.getConfig("messages.yml").getString(path, path);
+    }
+    private void runSync(Runnable action) {
+        if (Bukkit.isPrimaryThread()) {
+            action.run();
+            return;
+        }
+        Bukkit.getScheduler().runTask(plugin, action);
     }
 }
