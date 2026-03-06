@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 
 public class Placeholders extends PlaceholderExpansion {
 
@@ -45,47 +46,37 @@ public class Placeholders extends PlaceholderExpansion {
             return "enabled";
         }
 
-        if (player != null && params.equalsIgnoreCase("brokenblocks")) {
-            return String.valueOf(
-                    repository.findByIdAsync(player.getUniqueId())
-                            .thenCompose(existing -> {
-                                DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                                return data.getBrokenBlocks();
-                            })
-            );
+        if (player == null) {
+            return null;
         }
 
-        if (player != null && params.equals("claim")) {
-            return String.valueOf(
-                    repository.findByIdAsync(player.getUniqueId())
-                            .thenCompose(existing -> {
-                                DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                                return data.getBrokenBlocks()*data.getCostMultiplier()*plugin.getConfigManager().getConfig("config.yml").getDouble("tree.reward", 3.0D);
-                            })
-            );
+        DataManager data;
+        try {
+            data = repository.findByIdAsync(player.getUniqueId())
+                    .thenApply(existing -> existing.orElseGet(() -> new DataManager(player.getUniqueId())))
+                    .join();
+        } catch (CompletionException exception) {
+            plugin.getLogger().warning("Failed to load placeholder data for " + player.getName() + ": " + exception.getMessage());
+            return "0";
         }
 
-        if (player != null && params.equals("backpack")) {
-            return String.valueOf(
-                    repository.findByIdAsync(player.getUniqueId())
-                            .thenCompose(existing -> {
-                                DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                                return data.getBackpack();
-                            })
-            );
+        if (params.equalsIgnoreCase("brokenblocks")) {
+            return String.valueOf(data.getBrokenBlocks());
         }
 
-        if (player != null && params.equals("cm")) {
-            return String.valueOf(
-                    repository.findByIdAsync(player.getUniqueId())
-                            .thenCompose(existing -> {
-                                DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                                return data.getCostMultiplier();
-                            })
-            );
+        if (params.equalsIgnoreCase("claim")) {
+            return String.valueOf(data.getBrokenBlocks() * data.getCostMultiplier() * plugin.getConfigManager().getConfig("config.yml").getDouble("tree.reward", 3.0D));
         }
 
-        if (params.startsWith("reward")) {
+        if (params.equalsIgnoreCase("backpack")) {
+            return String.valueOf(data.getBackpack());
+        }
+
+        if (params.equalsIgnoreCase("cm")) {
+            return String.valueOf(data.getCostMultiplier());
+        }
+
+        if (params.equalsIgnoreCase("reward")) {
             return String.valueOf(plugin.getConfigManager().getConfig("config.yml").getDouble("tree.reward", 3.0D));
         }
 
