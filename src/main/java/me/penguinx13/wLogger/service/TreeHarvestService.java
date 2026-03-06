@@ -79,31 +79,20 @@ public final class TreeHarvestService {
             treeState.putIfAbsent(leaf, TreeRegenerationTask.snapshot(leaf));
         }
 
-        int backpack = repository.findByIdAsync(player.getUniqueId())
-                .thenCompose(existing -> {
-                    DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                    return data.getBackpack();
-                });
-        int brokenBlocks = repository.findByIdAsync(player.getUniqueId())
-                .thenCompose(existing -> {
-                    DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                    return data.getBrokenBlocks();
-                });
+        DataManager data = repository.findByIdAsync(player.getUniqueId())
+                .thenApply(existing -> existing.orElseGet(() -> new DataManager(player.getUniqueId())))
+                .join();
+
+        int backpack = data.getBackpack();
+        int brokenBlocks = data.getBrokenBlocks();
 
         boolean full = backpack <= (brokenBlocks + requiredBreaks);
         if (full) {
-            repository.findByIdAsync(player.getUniqueId())
-                    .thenCompose(existing -> {
-                        DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                        return data.setBrokenBlocks(backpack);
-                    });
+            data.setBrokenBlocks(backpack);
         } else {
-            repository.findByIdAsync(player.getUniqueId())
-                    .thenCompose(existing -> {
-                        DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                        return data.setBrokenBlocks(brokenBlocks + requiredBreaks);
-                    });
+            data.setBrokenBlocks(brokenBlocks + requiredBreaks);
         }
+        repository.saveAsync(data);
 
         new LeafDecayTask(leaves).runTaskTimer(plugin, 1L, 1L);
         long cooldownSeconds = Math.max(1, configManager.getConfig("config.yml").getLong("tree.cooldown", 15L));
