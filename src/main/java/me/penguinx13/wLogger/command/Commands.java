@@ -38,7 +38,7 @@ public final class Commands {
         sendUsage(sender);
     }
 
-    @SubCommand(value = "claim", playerOnly = true)
+    @SubCommand(value = "claim")
     public void claim(Player player) {
 
         repository.findByIdAsync(player.getUniqueId())
@@ -69,7 +69,7 @@ public final class Commands {
 
     @SubCommand(value = "set", permission = "wlogger.admin")
     public void set(CommandSender sender,
-                    @Arg(value = "parameter", optional = true) String parameter,
+                    @Arg(value = "parameter") String parameter,
                     @Arg("target") Player target,
                     @Arg("value") Integer value)
     {
@@ -104,7 +104,7 @@ public final class Commands {
 
     @SubCommand(value = "add", permission = "wlogger.admin")
     public void add(CommandSender sender,
-                    @Arg(value = "parameter", optional = true) String parameter,
+                    @Arg(value = "parameter") String parameter,
                     @Arg("target") Player target,
                     @Arg("value") Integer value)
     {
@@ -139,7 +139,7 @@ public final class Commands {
 
     @SubCommand(value = "rem", permission = "wlogger.admin")
     public void rem(CommandSender sender,
-                    @Arg(value = "parameter", optional = true) String parameter,
+                    @Arg(value = "parameter") String parameter,
                     @Arg("target") Player target,
                     @Arg("value") Integer value)
     {

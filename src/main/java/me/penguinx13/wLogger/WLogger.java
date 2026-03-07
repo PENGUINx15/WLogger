@@ -23,6 +23,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public final class WLogger extends JavaPlugin {
     private ConfigManager configManager;
@@ -46,58 +47,65 @@ public final class WLogger extends JavaPlugin {
 
         sqliteManager = new SQLiteManager(getDataFolder(), "example.db", Bukkit::isPrimaryThread);
 
-        SimpleORM orm = new SimpleORM(sqliteManager);
-        orm.registerEntity(DataManager.class);
-        Repository<DataManager, UUID> repository = orm.getRepository(DataManager.class);
+        CompletableFuture.runAsync(() -> {
+            SimpleORM orm = new SimpleORM(sqliteManager);
+            orm.registerEntity(DataManager.class);
+            Repository<DataManager, UUID> repository = orm.getRepository(DataManager.class);
 
+            TreeHarvestService treeHarvestService = new TreeHarvestService(this, configManager, repository);
+            if (!treeHarvestService.validateRegionConfiguration()) {
+                getLogger().severe("Invalid region configuration: location.min.world and location.max.world must match.");
+                return;
+            }
 
-        TreeHarvestService treeHarvestService = new TreeHarvestService(this, configManager, repository);
-        if (!treeHarvestService.validateRegionConfiguration()) {
-            throw new IllegalStateException("Invalid region configuration: location.min.world and location.max.world must match.");
-        }
+            Bukkit.getScheduler().runTask(this, () -> {
+                String progress = configManager.getConfig("messages.yml").getString("break.progress", "break.progress");
+                String completed = configManager.getConfig("messages.yml").getString("break.completed", "break.completed");
+                String backpackFull = configManager.getConfig("messages.yml").getString("break.backpackFull", "break.backpackFull");
+                getServer().getPluginManager().registerEvents(new BlockBreakListener(treeHarvestService, progress, completed, backpackFull), this);
 
-        String progress = configManager.getConfig("messages.yml").getString("break.progress", "break.progress");
-        String completed = configManager.getConfig("messages.yml").getString("break.completed", "break.completed");
-        String backpackFull = configManager.getConfig("messages.yml").getString("break.backpackFull", "break.backpackFull");
-        getServer().getPluginManager().registerEvents(new BlockBreakListener(treeHarvestService, progress, completed, backpackFull), this);
+                CommandRegistrationService registrationService = new CommandRegistrationService();
+                registrationService.register(new Commands(this, configManager, repository));
 
-        CommandRegistrationService registrationService = new CommandRegistrationService();
-        registrationService.register(new Commands(this, configManager, repository));
+                ResolverRegistry resolverRegistry = new ResolverRegistry();
+                DefaultResolvers.registerDefaults(resolverRegistry);
+                resolverRegistry.register(new PaperPlayerResolver());
 
-        ResolverRegistry resolverRegistry = new ResolverRegistry();
-        DefaultResolvers.registerDefaults(resolverRegistry);
-        resolverRegistry.register(new PaperPlayerResolver());
+                ValidationService validationService = new ValidationService();
+                PaperPlatformBridge bridge = new PaperPlatformBridge(new PaperScheduler(this));
 
-        ValidationService validationService = new ValidationService();
-        PaperPlatformBridge bridge = new PaperPlatformBridge(new PaperScheduler(this));
+                CommandRuntime runtime = new CommandRuntime(
+                        registrationService.buildTree(),
+                        new CommandPipeline(List.of(
+                                new RoutingStage(),
+                                new ArgumentParsingStage(),
+                                new ValidationStage(),
+                                new AuthorizationStage(),
+                                new InvocationStage(),
+                                new PostProcessingStage()
+                        )),
+                        resolverRegistry,
+                        validationService,
+                        new DefaultErrorPresenter(new PaperLogger(getLogger())),
+                        List.of(),
+                        bridge,
+                        new NoopMetricsSink()
+                );
 
-        CommandRuntime runtime = new CommandRuntime(
-                registrationService.buildTree(),
-                new CommandPipeline(List.of(
-                        new RoutingStage(),
-                        new ArgumentParsingStage(),
-                        new ValidationStage(),
-                        new AuthorizationStage(),
-                        new InvocationStage(),
-                        new PostProcessingStage()
-                )),
-                resolverRegistry,
-                validationService,
-                new DefaultErrorPresenter(new PaperLogger(getLogger())),
-                List.of(),
-                bridge,
-                new NoopMetricsSink()
-        );
+                new PaperCommandBinder(this, bridge).bind(runtime);
 
-        new PaperCommandBinder(this, bridge).bind(runtime);
-
-        if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
-            new Placeholders(this, repository).register();
-            getLogger().info(configManager.getConfig("messages.yml").getString("log.placeholdersRegistered", "log.placeholdersRegistered"));
-        }
+                if (Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null) {
+                    new Placeholders(this, repository).register();
+                    getLogger().info(configManager.getConfig("messages.yml").getString("log.placeholdersRegistered", "log.placeholdersRegistered"));
+                }
+            });
+        });
     }
 
     @Override
     public void onDisable() {
+        if (sqliteManager != null) {
+            sqliteManager.shutdown();
+        }
     }
 }
