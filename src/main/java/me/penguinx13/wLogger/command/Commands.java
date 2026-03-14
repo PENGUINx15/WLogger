@@ -43,25 +43,25 @@ public final class Commands {
 
         repository.findByIdAsync(player.getUniqueId())
                 .thenCompose(existing -> {
-                    DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
-                    if (data.getBrokenBlocks() == 0) {
-                        return repository.saveAsync(data)
-                                .thenRun(() -> runSync(() ->
-                                        MessageManager.sendMessage(player, msg("command.claim.nothingToClaim"))
-                                ));
-                    }
-                    double reward = data.getBrokenBlocks() * data.getCostMultiplier() * configManager.getConfig("config.yml").getInt("tree.reward");
-                    Economy economy = Bukkit.getServicesManager().getRegistration(Economy.class).getProvider();
-                    economy.depositPlayer(player, reward);
-                    data.setBrokenBlocks(0);
-                    return repository.saveAsync(data)
-                            .thenRun(() -> runSync(() ->
-                                    MessageManager.sendMessage(player, msg("command.claim.success"), Map.of(
-                                            "blocks", String.valueOf(data.getBrokenBlocks()),
-                                            "reward", String.format("%.2f", reward)
-                                    ))));
+                            DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
+                            if (data.getBrokenBlocks() == 0) {
+                                return repository.saveAsync(data)
+                                        .thenRun(() -> runSync(() ->
+                                                MessageManager.sendMessage(player, msg("command.claim.nothingToClaim"))
+                                        ));
+                            }
+                            double reward = data.getBrokenBlocks() * data.getCostMultiplier() * configManager.getConfig("config.yml").getInt("tree.reward");
+                            Economy economy = Bukkit.getServicesManager().getRegistration(Economy.class).getProvider();
+                            economy.depositPlayer(player, reward);
+                            data.setBrokenBlocks(0);
+                            return repository.saveAsync(data)
+                                    .thenRun(() -> runSync(() ->
+                                            MessageManager.sendMessage(player, msg("command.claim.success"), Map.of(
+                                                    "blocks", String.valueOf(data.getBrokenBlocks()),
+                                                    "reward", String.format("%.2f", reward)
+                                            ))));
 
-                }
+                        }
                 );
 
 
@@ -84,9 +84,9 @@ public final class Commands {
                                     .thenRun(() -> runSync(() ->
                                             MessageManager.sendMessage((Player) sender,msg("command.set"),
                                                     Map.of(
-                                                    "parameter", parameter,
-                                                    "target", target.getName(),
-                                                    "value", value))
+                                                            "parameter", parameter,
+                                                            "target", target.getName(),
+                                                            "value", value))
                                     ));});
             case "costmultiplier":
                 repository.findByIdAsync(target.getUniqueId())
