@@ -174,18 +174,29 @@ public final class Commands {
     }
     @SubCommand(value = "info")
     public void info(CommandSender sender) {
-        Player player = (Player) sender;
+        if (!(sender instanceof Player player)) {
+            return;
+        }
+
         repository.findByIdAsync(player.getUniqueId())
                 .thenCompose(existing -> {
                     DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
+                    double reward = data.getBrokenBlocks()
+                            * data.getCostMultiplier()
+                            * configManager.getConfig("config.yml").getInt("tree.reward");
+
                     return repository.saveAsync(data)
-                            .thenRun(() -> runSync(() ->
-                                    MessageManager.sendMessage(player,msg("command.info"),
-                                            Map.of(
-                                                    "parameter", parameter,
-                                                    "target", target,
-                                                    "value", value))
-                            ));});
+                            .thenRun(() -> runSync(() -> {
+                                List<String> infoLines = configManager.getConfig("messages.yml").getStringList("command.info");
+                                for (String line : infoLines) {
+                                    MessageManager.sendMessage(player, line, Map.of(
+                                            "reward", String.format("%.2f", reward),
+                                            "brokenblocks", String.valueOf(data.getBrokenBlocks()),
+                                            "backpack", String.valueOf(data.getBackpack())
+                                    ));
+                                }
+                            }));
+                });
     }
 
     private void sendUsage(CommandSender sender) {
