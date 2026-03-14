@@ -53,6 +53,7 @@ public final class Commands {
                     double reward = data.getBrokenBlocks() * data.getCostMultiplier() * configManager.getConfig("config.yml").getInt("tree.reward");
                     Economy economy = Bukkit.getServicesManager().getRegistration(Economy.class).getProvider();
                     economy.depositPlayer(player, reward);
+                    data.setBrokenBlocks(0);
                     return repository.saveAsync(data)
                             .thenRun(() -> runSync(() ->
                                     MessageManager.sendMessage(player, msg("command.claim.success"), Map.of(
@@ -84,7 +85,7 @@ public final class Commands {
                                             MessageManager.sendMessage((Player) sender,msg("command.set"),
                                                     Map.of(
                                                     "parameter", parameter,
-                                                    "target", target,
+                                                    "target", target.getName(),
                                                     "value", value))
                                     ));});
             case "costmultiplier":
@@ -96,7 +97,7 @@ public final class Commands {
                                     .thenRun(() -> runSync(() ->MessageManager.sendMessage((Player) sender,msg("command.set"),
                                             Map.of(
                                                     "parameter", parameter,
-                                                    "target", target,
+                                                    "target", target.getName(),
                                                     "value", value))
                                     ));});
         }
@@ -119,7 +120,7 @@ public final class Commands {
                                             MessageManager.sendMessage((Player) sender,msg("command.add"),
                                                     Map.of(
                                                             "parameter", parameter,
-                                                            "target", target,
+                                                            "target", target.getName(),
                                                             "value", value))
                                     ));});
             case "costmultiplier":
@@ -170,6 +171,21 @@ public final class Commands {
                                                     "value", value))
                                     ));});
         }
+    }
+    @SubCommand(value = "info")
+    public void info(CommandSender sender) {
+        Player player = (Player) sender;
+        repository.findByIdAsync(player.getUniqueId())
+                .thenCompose(existing -> {
+                    DataManager data = existing.orElseGet(() -> new DataManager(player.getUniqueId()));
+                    return repository.saveAsync(data)
+                            .thenRun(() -> runSync(() ->
+                                    MessageManager.sendMessage(player,msg("command.info"),
+                                            Map.of(
+                                                    "parameter", parameter,
+                                                    "target", target,
+                                                    "value", value))
+                            ));});
     }
 
     private void sendUsage(CommandSender sender) {

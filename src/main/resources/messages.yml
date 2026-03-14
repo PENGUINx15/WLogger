@@ -22,6 +22,11 @@ command:
     nothingToClaim: "{message}&7[&6&lЛесорубка&7]&f Нечего сдавать."
     economyUnavailable: "{message}&7[&6&lЛесорубка&7]&f Экономика недоступна, обратитесь к администрации."
     success: "{message}&7[&6&lЛесорубка&7]&f Вы сдали &6{blocks}&f блоков и получили &6{reward}"
+  info:
+    - "----------[&6Лесорубка&f]----------"
+    - "Ожидаемая зарплата: {reward}"
+    - "Рюкзак: &e{brokenblocks}&f/&6{backpack}"
+    - "&m-----------------------------------"
 break:
   progress: "{action}&e{current}&f/&6{required}"
   completed: "{action}&6{required}"
